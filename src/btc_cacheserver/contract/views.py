@@ -11,7 +11,7 @@ from django.db.models import Q
 
 from models import User, PlatFormInfo, LoanInformation, RepaymentInfo
 
-Log = logging.getLogger("")
+Log = logging.getLogger("scripts")
 
 
 def _check_model_data(d_model, query):
@@ -57,7 +57,7 @@ def update_load_data(request):
     datas = msg_body.get("data", [])
 
     if len(datas) == 0:
-        Log.error("")
+        Log.warn("")
         return JsonResponse({
             'code': -1,
             'msg': "",
@@ -99,7 +99,7 @@ def update_load_data(request):
                                                        overdue_days=overdue_days)
 
     except Exception as err:
-        Log.error(str(err))
+        Log.error(str(err), exc_info=True)
         return JsonResponse({
             'code': -1,
             'msg': str(err),
@@ -116,7 +116,7 @@ def update_repayment_data(request):
     datas = msg_body.get("data", [])
 
     if len(datas) == 0:
-        Log.error("")
+        Log.warn("")
         return JsonResponse({
             'code': -1,
             'msg': "",
@@ -157,7 +157,7 @@ def update_repayment_data(request):
                         repay_plans=repay_plans)
 
     except Exception as err:
-        Log.error(str(err))
+        Log.error(str(err), exc_info=True)
         return JsonResponse({
             'code': -1,
             'msg': str(err),

@@ -2,5 +2,40 @@
 #-*- coding: utf-8 -*-
 
 from django.contrib import admin
+from models import *
 
-# Register your models here.
+
+class UserAdmin(admin.ModelAdmin):
+    list_display = ['username', 'phone_no', 'id_no']
+    search_fields = ['username', 'phone_no', 'id_no']
+    ordering = ['-id']
+
+
+class PlatFormAdmin(admin.ModelAdmin):
+    list_display = ["owner_username", "platform", "credit_ceiling"]
+    search_fields = ['platform']
+    ordering = ['-id']
+
+    def owner_username(self, obj):
+        return "{}".format(obj.owner.username)
+
+
+class LoanInfoAdmin(admin.ModelAdmin):
+    list_display = ["order_number", "apply_amount", "exact_amount", "reason", "apply_time", "interest", "bank_card", "overdue_days"]
+    search_fields = ['order_number']
+    ordering = ['-id']
+
+
+class RepaymentAdmin(admin.ModelAdmin):
+    list_display = ["loan_info_id", "order_number", "installment_number", "real_repay_time", "overdue_days", "real_repay_amount", "repay_amount_type"]
+    search_fields = ['order_number']
+    ordering = ['-id']
+
+    def loan_info_id(self, obj):
+        return "{}".format(obj.loan_info.id)
+
+
+admin.site.register(User, UserAdmin)
+admin.site.register(PlatFormInfo, PlatFormAdmin)
+admin.site.register(LoanInformation, LoanInfoAdmin)
+admin.site.register(RepaymentInfo, RepaymentAdmin)
