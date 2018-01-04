@@ -6,11 +6,32 @@ created by antimoth at 2018-01-02
 """
 
 from django.db import models
-from .user import User
+
+# 用户信息
+class User(models.Model):
+    username = models.CharField(max_length=64, null=True, help_text="用户姓名")
+    phone_no = models.CharField(max_length=20, help_text="用户电话")
+    id_no = models.CharField(max_length=20, blank=True, null=True, help_text="身份证号")
+
+    class Meta:
+        db_table = u'users'
+
+    def __unicode__(self):
+        return u'%d)%s' % (self.id, self.username)
+
+
+#平台信息
+class PlatFormInfo(models.Model):
+    platform = models.CharField(max_length=64, help_text="所属平台")
+    credit_ceiling = models.IntegerField(default=0, help_text="授信额度")
+    owner = models.ForeignKey(User)
+
+    class Meta:
+        db_table = u'platforminfo'
 
 
 class LoanInformation(models.Model):
-    user = models.ForeignKey(User, help_text='贷款人')
+    platform = models.ForeignKey(PlatFormInfo)
     order_number = models.CharField(max_length=255, help_text='订单号')
     apply_amount = models.IntegerField(default=0, help_text='申请金额', blank=True,
                                        null=True)
@@ -18,8 +39,7 @@ class LoanInformation(models.Model):
                                        blank=True, null=True)
     reason = models.CharField(max_length=255, blank=True, null=True,
                               help_text='用途')
-    apply_time = models.DateTimeField(auto_now_add=True, help_text='申请时间',
-                                      blank=True, null=True)
+    apply_time = models.DateTimeField(help_text='申请时间', blank=True, null=True)
     interest = models.IntegerField(default=0, help_text='利率')
     bank_card = models.CharField(max_length=64, help_text='此次交易所属的银行卡',
                                  null=True, blank=True)
