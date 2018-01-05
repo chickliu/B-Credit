@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q
 
-from models import User, PlatFormInfo, LoanInformation, RepaymentInfo
+from btc_cacheserver.contract.models import User, PlatFormInfo, LoanInformation, RepaymentInfo
 
 Log = logging.getLogger("scripts")
 
@@ -53,7 +53,7 @@ def _save_user_and_platform_info(user):
 @require_http_methods(['POST'])
 @csrf_exempt
 def update_load_data(request):
-    msg_body = json.loads(request.body)
+    msg_body = json.loads(request.body.decode("utf-8"))
     datas = msg_body.get("data", [])
 
     if len(datas) == 0:
@@ -112,7 +112,7 @@ def update_load_data(request):
 @require_http_methods(['POST'])
 @csrf_exempt
 def update_repayment_data(request):
-    msg_body = json.loads(request.body)
+    msg_body = json.loads(request.body.decode('utf-8'))
     datas = msg_body.get("data", [])
 
     if len(datas) == 0:
@@ -137,7 +137,7 @@ def update_repayment_data(request):
                     order_number = repayment.get("order_number", "")
                     loan_info = LoanInformation.objects.filter(order_number=order_number).first()
                     if not loan_info:
-                        Log.warn("")
+                        Log.warn("loan info is {}".format(loan_info))
                         continue
                     installment_number = repayment.get("installment_number", 0)
                     real_repay_time = repayment.get("real_repay_time", "")
@@ -165,3 +165,4 @@ def update_repayment_data(request):
         })
 
     return JsonResponse({"code": 0, "msg": "success"})
+

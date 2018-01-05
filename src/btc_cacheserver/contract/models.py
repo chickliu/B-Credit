@@ -24,14 +24,13 @@ class User(models.Model):
 class PlatFormInfo(models.Model):
     platform = models.CharField(max_length=64, help_text="所属平台")
     credit_ceiling = models.IntegerField(default=0, help_text="授信额度")
-    owner = models.ForeignKey(User)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
         db_table = u'platforminfo'
 
-
 class LoanInformation(models.Model):
-    platform = models.ForeignKey(PlatFormInfo)
+    platform = models.ForeignKey(PlatFormInfo, on_delete=models.CASCADE)
     order_number = models.CharField(max_length=255, help_text='订单号')
     apply_amount = models.IntegerField(default=0, help_text='申请金额', blank=True,
                                        null=True)
@@ -39,7 +38,8 @@ class LoanInformation(models.Model):
                                        blank=True, null=True)
     reason = models.CharField(max_length=255, blank=True, null=True,
                               help_text='用途')
-    apply_time = models.DateTimeField(help_text='申请时间', blank=True, null=True)
+    apply_time = models.DateTimeField(help_text='申请时间',
+                                      blank=True, null=True)
     interest = models.IntegerField(default=0, help_text='利率')
     bank_card = models.CharField(max_length=64, help_text='此次交易所属的银行卡',
                                  null=True, blank=True)
@@ -56,7 +56,7 @@ class RepaymentInfo(models.Model):
         (1, "期款"),
         (2, "提前结清"),
     )
-    loan_info = models.ForeignKey(LoanInformation)
+    loan_info = models.ForeignKey(LoanInformation, on_delete=models.CASCADE)
     order_number = models.CharField(max_length=255, help_text='订单号')
     installment_number = models.IntegerField(blank=True, null=True)
     real_repay_time = models.DateTimeField(blank=True, null=True, help_text="还款时间")
@@ -70,5 +70,4 @@ class RepaymentInfo(models.Model):
 
     class Meta:
         db_table = u'repaymentinfo'
-
 

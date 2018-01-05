@@ -2,7 +2,7 @@
 #-*- coding: utf-8 -*-
 
 from django.contrib import admin
-from models import *
+from btc_cacheserver.contract import models
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -35,7 +35,8 @@ class RepaymentAdmin(admin.ModelAdmin):
         return "{}".format(obj.loan_info.id)
 
 
-admin.site.register(User, UserAdmin)
-admin.site.register(PlatFormInfo, PlatFormAdmin)
-admin.site.register(LoanInformation, LoanInfoAdmin)
-admin.site.register(RepaymentInfo, RepaymentAdmin)
+admin.site.register(models.User, UserAdmin)
+admin.site.register(models.PlatFormInfo, PlatFormAdmin)
+admin.site.register(models.LoanInformation, LoanInfoAdmin)
+admin.site.register(models.RepaymentInfo, RepaymentAdmin)
+
