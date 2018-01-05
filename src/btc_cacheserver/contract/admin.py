@@ -21,9 +21,12 @@ class PlatFormAdmin(admin.ModelAdmin):
 
 
 class LoanInfoAdmin(admin.ModelAdmin):
-    list_display = ["order_number", "apply_amount", "exact_amount", "reason", "apply_time", "interest", "bank_card", "overdue_days"]
+    list_display = ["platform_name", "order_number", "apply_amount", "exact_amount", "reason", "apply_time", "interest", "bank_card", "overdue_days"]
     search_fields = ['order_number']
     ordering = ['-id']
+
+    def platform_name(self, obj):
+        return "{}".format(obj.platform.platform)
 
 
 class RepaymentAdmin(admin.ModelAdmin):
