@@ -15,10 +15,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from btc_cacheserver.contract.views import update_load_data, update_repayment_data
+from btc_cacheserver.contract.views import update_load_data, \
+    update_repayment_data, get_user_data
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('bc/loan/update/', update_load_data),
     path('bc/repayment/update/', update_repayment_data),
+    path('^bc/query/$', get_user_data),
 ]

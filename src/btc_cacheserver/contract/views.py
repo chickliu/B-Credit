@@ -57,11 +57,10 @@ def update_load_data(request):
     datas = msg_body.get("data", [])
 
     if len(datas) == 0:
-        Log.warn("")
+        Log.warn("Missing data can not be updated.")
         return JsonResponse({
             'code': -1,
-            'msg': "",
-            'content': ''
+            'msg': "Missing data can not be updated.",
         })
 
     try:
@@ -72,7 +71,7 @@ def update_load_data(request):
             loan_datas = data.get("loans", [])
 
             if len(loan_datas) == 0:
-                Log.warn("")
+                Log.warn("not loan data update.")
             else:
                 for loan in loan_datas:
                     order_number = loan.get("order_number", "")
@@ -102,11 +101,10 @@ def update_load_data(request):
         Log.error(str(err), exc_info=True)
         return JsonResponse({
             'code': -1,
-            'msg': str(err),
-            'content': ''
+            'msg': str(err)
         })
 
-    return JsonResponse({"code": 0, "msg": "success"})
+    return JsonResponse({"code": 0, "msg": "update loan data success."})
 
 
 @require_http_methods(['POST'])
@@ -116,11 +114,10 @@ def update_repayment_data(request):
     datas = msg_body.get("data", [])
 
     if len(datas) == 0:
-        Log.warn("")
+        Log.warn("Missing data can not be updated")
         return JsonResponse({
             'code': -1,
-            'msg': "",
-            'content': ''
+            'msg': "Missing data can not be updated"
         })
 
     try:
@@ -131,13 +128,13 @@ def update_repayment_data(request):
             repayments = data.get("repayments", [])
 
             if len(repayments) == 0:
-                Log.warn("")
+                Log.warn("Not repayment update.")
             else:
                 for repayment in repayments:
                     order_number = repayment.get("order_number", "")
                     loan_info = LoanInformation.objects.filter(order_number=order_number).first()
                     if not loan_info:
-                        Log.warn("loan info is {}".format(loan_info))
+                        Log.warn("Order number is error,can't find loan information.")
                         continue
                     installment_number = repayment.get("installment_number", 0)
                     real_repay_time = repayment.get("real_repay_time", "")
@@ -160,9 +157,87 @@ def update_repayment_data(request):
         Log.error(str(err), exc_info=True)
         return JsonResponse({
             'code': -1,
-            'msg': str(err),
-            'content': ''
+            'msg': str(err)
         })
 
-    return JsonResponse({"code": 0, "msg": "success"})
+    return JsonResponse({"code": 0, "msg": "update repayment success"})
+
+
+@require_http_methods(['GET'])
+@csrf_exempt
+def get_user_data(request):
+    phone_no = request.GET.get('phone', '')
+    id_no = request.GET.get('id', '')
+
+    Log.info("phone is {}, id is {}".format(phone_no, id_no))
+    if not (phone_no or id_no):
+        return JsonResponse({"code": -1, "msg": "error:phone or id is null."})
+
+    try:
+        user_obj = User.objects.filter(phone_no=phone_no, id_no=id_no)
+
+        if not user_obj:
+            return JsonResponse({"code": -1, "msg": "error:can't find user."})
+
+        user = user_obj.first()
+        user_data = {
+                "username": user.username,
+                "phone_no": user.phone_no,
+                "id_no": user.id_no,
+            }
+
+        platforminfos = PlatFormInfo.objects.filter(owner=user)
+        list_platform = list()
+        for platform in platforminfos:
+            dt_platform = {
+                    "platform": platform.platform,
+                    "ceiling": platform.credit_ceiling,
+                }
+            loaninfos = LoanInformation.objects.filter(platform=platform)
+
+            list_loaninfo = list()
+            for loan in loaninfos:
+                dt_loan = {
+                        "order_number": loan.order_number,
+                        "apply_amount": loan.apply_amount,
+                        "exact_amount": loan.exact_amount,
+                        "reason": loan.reason,
+                        "apply_time": loan.apply_time,
+                        "interest":loan.interest,
+                        "bank_card": loan.bank_card,
+                        "overdue_days": loan.overdue_days,
+                    }
+                repaymentinfo = RepaymentInfo.objects.filter(loan_info=loan)
+                list_repayment = list()
+                for repayment in repaymentinfo:
+                    dt_repayment = {
+                        "installment_number": repayment.installment_number,
+                        "real_repay_time": repayment.real_repay_time,
+                        "overdue_days": repayment.overdue_days,
+                        "real_repay_amount": repayment.real_repay_amount,
+                        "repay_amount_type": repayment.repay_amount_type,
+                        "repay_plans": repayment.repay_plans
+                    }
+                    list_repayment.append(dt_repayment)
+
+                dt_loan["repayment_data"] = list_repayment
+                list_loaninfo.append(dt_loan)
+
+            dt_platform["loan_data"] = list_loaninfo
+            list_platform.append(dt_platform)
+        user_data["platform_data"] = list_platform
+        return JsonResponse({'code': 0, "msg": user_data})
+    except Exception as err:
+        Log.error(str(err), exc_info=True)
+        return JsonResponse({
+            'code': -1,
+            'msg': str(err)
+        })
+
+
+
+
+
+
+
 
