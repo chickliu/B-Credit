@@ -1,0 +1,122 @@
+[
+  {
+    "stateMutability": "pure",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "string",
+        "name": ""
+      }
+    ],
+    "payable": false,
+    "constant": true,
+    "type": "function",
+    "name": "name"
+  },
+  {
+    "stateMutability": "nonpayable",
+    "inputs": [
+      {
+        "type": "string",
+        "name": "userName"
+      },
+      {
+        "type": "string",
+        "name": "idNo"
+      },
+      {
+        "type": "string",
+        "name": "phoneNo"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "address",
+        "name": ""
+      }
+    ],
+    "payable": false,
+    "constant": false,
+    "type": "function",
+    "name": "createUserContract"
+  },
+  {
+    "stateMutability": "view",
+    "inputs": [
+      {
+        "type": "string",
+        "name": "userName"
+      },
+      {
+        "type": "string",
+        "name": "idNo"
+      },
+      {
+        "type": "string",
+        "name": "phoneNo"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "address",
+        "name": ""
+      }
+    ],
+    "payable": false,
+    "constant": true,
+    "type": "function",
+    "name": "getUserContractAddr"
+  },
+  {
+    "stateMutability": "view",
+    "inputs": [
+      {
+        "type": "bytes32",
+        "name": "_userTag"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "address",
+        "name": ""
+      }
+    ],
+    "payable": false,
+    "constant": true,
+    "type": "function",
+    "name": "getUserContractAddrByTag"
+  },
+  {
+    "stateMutability": "pure",
+    "inputs": [
+      {
+        "type": "string",
+        "name": "userName"
+      },
+      {
+        "type": "string",
+        "name": "idNo"
+      },
+      {
+        "type": "string",
+        "name": "phoneNo"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "bytes32",
+        "name": ""
+      }
+    ],
+    "payable": false,
+    "constant": true,
+    "type": "function",
+    "name": "getUserTag"
+  },
+  {
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "inputs": [],
+    "type": "constructor"
+  }
+]
