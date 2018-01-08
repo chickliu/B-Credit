@@ -12,6 +12,7 @@ class User(models.Model):
     username = models.CharField(max_length=64, null=True, help_text="用户姓名")
     phone_no = models.CharField(max_length=20, help_text="用户电话")
     id_no = models.CharField(max_length=20, blank=True, null=True, help_text="身份证号")
+    contract = models.CharField(max_length=66, blank=True, null=True, help_text="合约地址")
 
     class Meta:
         db_table = u'users'
@@ -25,6 +26,7 @@ class PlatFormInfo(models.Model):
     platform = models.CharField(max_length=64, help_text="所属平台")
     credit_ceiling = models.IntegerField(default=0, help_text="授信额度")
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    tag = models.BinaryField(max_length=66,blank=True, null=True, help_text="区块链中的唯一标识")
 
     class Meta:
         db_table = u'platforminfo'
@@ -45,10 +47,18 @@ class LoanInformation(models.Model):
                                  null=True, blank=True)
     overdue_days = models.IntegerField(default=0, help_text='当前逾期天数',
                                        blank=True)
+    tag = models.BinaryField(max_length=66,blank=True, null=True, help_text="区块链中的唯一标识")
 
     class Meta:
         db_table = u'loaninformation'
 
+class InstallmentInfo(models.Model):
+    installment_number = models.IntegerField(blank=True)
+    repay_time = models.DateTimeField(blank=True, help_text="应还时间")
+    repay_amount = models.IntegerField(default=0, help_text="应还金额")
+    tag = models.BinaryField(max_length=66,blank=True, null=True, help_text="区块链中的唯一标识")
+    class Meta:
+        db_table = u'installmentinfo'
 
 class RepaymentInfo(models.Model):
     repay_amount_type_t = (
@@ -66,8 +76,25 @@ class RepaymentInfo(models.Model):
     real_repay_amount = models.IntegerField(default=0, help_text="实际还款金额",
                                             blank=True, null=True)
     repay_amount_type = models.IntegerField(choices=repay_amount_type_t, help_text='还款类型', blank=True)
-    repay_plans = models.CharField(max_length=255, help_text="还款计划")
+    tag = models.BinaryField(max_length=66,blank=True, null=True, help_text="区块链中的唯一标识")
 
     class Meta:
         db_table = u'repaymentinfo'
 
+
+class TransactionInfo(models.Model):
+    cumulativeGasUsed = models.IntegerField(default=0, help_text="累计gas消耗")
+    gasUsed = models.IntegerField(default=0, help_text="gas消耗")
+    blockNumber = models.IntegerField(default=0, help_text="区块号")
+    transactionIndex = models.IntegerField(default=0, help_text="区块号")
+    call_from = models.CharField(max_length=64, help_text='合约调用account')
+    call_to = models.CharField(max_length=64, help_text='合约地址')
+    transactionHash = models.CharField(max_length=70, help_text='交易的hash')
+    types = models.CharField(max_length=32, help_text='此次交易所更改的数据类型')
+    user = models.ForeignKey(User, blank=True, null=True, on_delete=models.SET_NULL)
+    loan = models.ForeignKey(LoanInformation, blank=True, null=True, on_delete=models.SET_NULL)
+    platform = models.ForeignKey(PlatFormInfo, blank=True, null=True, on_delete=models.SET_NULL)
+    repayment = models.ForeignKey(RepaymentInfo, blank=True, null=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        db_table = u'transactioninfo'
