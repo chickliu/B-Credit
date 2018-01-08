@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q
 
-from btc_cacheserver.contract.models import User, PlatFormInfo, LoanInformation, RepaymentInfo
+from btc_cacheserver.contract.models import User, PlatFormInfo, LoanInformation, RepaymentInfo, InstallmentInfo
 
 Log = logging.getLogger("scripts")
 
@@ -50,6 +50,22 @@ def _save_user_and_platform_info(user):
         return platform_obj
 
 
+def _get_installmentinfo_with_loan(loaninfo):
+    installmentinfos = InstallmentInfo.objects.filter(loan_info=loaninfo)
+    if installmentinfos:
+        list_info = []
+        for info in installmentinfos:
+            data = {
+                "installment_number": info.installment_number,
+                "repay_time": info.repay_time,
+                "repay_amount": info.repay_amount
+           }
+            list_info.append(data)
+        return json.dumps(list_info)
+    else:
+        return ""
+
+
 @require_http_methods(['POST'])
 @csrf_exempt
 def update_load_data(request):
@@ -87,15 +103,23 @@ def update_load_data(request):
                         bank_card = loan.get("bank_card", "")
                         overdue_days = loan.get("overdue_days", 0)
 
-                        LoanInformation.objects.create(platform=platform_obj,
-                                                       order_number=order_number,
-                                                       apply_amount=apply_amount,
-                                                       exact_amount=exact_amount,
-                                                       reason=reason,
-                                                       apply_time=apply_time,
-                                                       interest=interest,
-                                                       bank_card=bank_card,
-                                                       overdue_days=overdue_days)
+                        loan_obj = LoanInformation.objects.create(platform=platform_obj,
+                                                               order_number=order_number,
+                                                               apply_amount=apply_amount,
+                                                               exact_amount=exact_amount,
+                                                               reason=reason,
+                                                               apply_time=apply_time,
+                                                               interest=interest,
+                                                               bank_card=bank_card,
+                                                               overdue_days=overdue_days)
+                        repay_plans = loan.get("repay_plans", "")
+
+                        if repay_plans:
+                            plan_data = json.loads(repay_plans)
+                            InstallmentInfo.objects.create(loan_info=loan_obj,
+                                                           installment_number=plan_data.get("installment_number"),
+                                                           repay_time=plan_data.get("repay_time"),
+                                                           repay_amount=plan_data.get("repay_amount"))
 
     except Exception as err:
         Log.error(str(err), exc_info=True)
@@ -141,7 +165,6 @@ def update_repayment_data(request):
                     overdue_days = repayment.get("overdue_days", 0)
                     real_repay_amount = repayment.get("real_repay_amount", 0)
                     repay_amount_type = repayment.get("repay_amount_type", 0)
-                    repay_plans = repayment.get("repay_plans", "")
 
                     RepaymentInfo.objects.create(
                         loan_info=loan_info,
@@ -150,8 +173,7 @@ def update_repayment_data(request):
                         real_repay_time=real_repay_time,
                         overdue_days=overdue_days,
                         real_repay_amount=real_repay_amount,
-                        repay_amount_type=repay_amount_type,
-                        repay_plans=repay_plans)
+                        repay_amount_type=repay_amount_type)
 
     except Exception as err:
         Log.error(str(err), exc_info=True)
@@ -197,15 +219,17 @@ def get_user_data(request):
 
             list_loaninfo = list()
             for loan in loaninfos:
+                repay_plans = _get_installmentinfo_with_loan(loan)
                 dt_loan = {
                         "order_number": loan.order_number,
                         "apply_amount": loan.apply_amount,
                         "exact_amount": loan.exact_amount,
                         "reason": loan.reason,
                         "apply_time": loan.apply_time,
-                        "interest":loan.interest,
+                        "interest": loan.interest,
                         "bank_card": loan.bank_card,
                         "overdue_days": loan.overdue_days,
+                        "repay_plans": repay_plans
                     }
                 repaymentinfo = RepaymentInfo.objects.filter(loan_info=loan)
                 list_repayment = list()
@@ -215,8 +239,7 @@ def get_user_data(request):
                         "real_repay_time": repayment.real_repay_time,
                         "overdue_days": repayment.overdue_days,
                         "real_repay_amount": repayment.real_repay_amount,
-                        "repay_amount_type": repayment.repay_amount_type,
-                        "repay_plans": repayment.repay_plans
+                        "repay_amount_type": repayment.repay_amount_type
                     }
                     list_repayment.append(dt_repayment)
 
