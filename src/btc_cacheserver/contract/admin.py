@@ -30,8 +30,8 @@ class LoanInfoAdmin(admin.ModelAdmin):
 
 
 class RepaymentAdmin(admin.ModelAdmin):
-    list_display = ["loan_info_id", "order_number", "installment_number", "real_repay_time", "overdue_days", "real_repay_amount", "repay_amount_type"]
-    search_fields = ['order_number']
+    list_display = ["loan_info_id", "installment_number", "real_repay_time", "overdue_days", "real_repay_amount", "repay_amount_type"]
+    search_fields = ['loan_info_id']
     ordering = ['-id']
 
     def loan_info_id(self, obj):
