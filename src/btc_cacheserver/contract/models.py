@@ -13,6 +13,7 @@ class User(models.Model):
     phone_no = models.CharField(max_length=20, help_text="用户电话")
     id_no = models.CharField(max_length=20, blank=True, null=True, help_text="身份证号")
     contract = models.CharField(max_length=66, blank=True, null=True, help_text="合约地址")
+    loan_counter = models.IntegerField(blank=True, default=0, help_text="借贷次数")
 
     class Meta:
         db_table = u'users'
@@ -26,6 +27,7 @@ class PlatFormInfo(models.Model):
     platform = models.CharField(max_length=64, help_text="所属平台")
     credit_ceiling = models.IntegerField(default=0, help_text="授信额度")
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    expend_counter = models.IntegerField(blank=True, default=0, help_text="支用次数")
     tag = models.BinaryField(max_length=66,blank=True, null=True, help_text="区块链中的唯一标识")
 
     class Meta:
@@ -48,11 +50,14 @@ class LoanInformation(models.Model):
     overdue_days = models.IntegerField(default=0, help_text='当前逾期天数',
                                        blank=True)
     tag = models.BinaryField(max_length=66,blank=True, null=True, help_text="区块链中的唯一标识")
+    installment_counter = models.IntegerField(blank=True, default=0, help_text="分期数")
+    repayment_counter = models.IntegerField(blank=True, default=0, help_text="还款次数")
 
     class Meta:
         db_table = u'loaninformation'
 
 class InstallmentInfo(models.Model):
+    loan_info = models.ForeignKey(LoanInformation, on_delete=models.CASCADE)
     installment_number = models.IntegerField(blank=True)
     repay_time = models.DateTimeField(blank=True, help_text="应还时间")
     repay_amount = models.IntegerField(default=0, help_text="应还金额")
@@ -95,6 +100,7 @@ class TransactionInfo(models.Model):
     loan = models.ForeignKey(LoanInformation, blank=True, null=True, on_delete=models.SET_NULL)
     platform = models.ForeignKey(PlatFormInfo, blank=True, null=True, on_delete=models.SET_NULL)
     repayment = models.ForeignKey(RepaymentInfo, blank=True, null=True, on_delete=models.SET_NULL)
+    installment = models.ForeignKey(InstallmentInfo, blank=True, null=True, on_delete=models.SET_NULL)
 
     class Meta:
         db_table = u'transactioninfo'
