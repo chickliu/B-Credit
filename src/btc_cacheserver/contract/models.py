@@ -30,6 +30,7 @@ class PlatFormInfo(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     expend_counter = models.IntegerField(default=0, help_text="支用次数")
     tag = models.BinaryField(max_length=66,blank=True, null=True, help_text="区块链中的唯一标识")
+    creator = models.CharField(max_length=64, blank=True, null=True, help_text='创建记录的account')
 
     class Meta:
         db_table = u'platforminfo'
@@ -47,6 +48,7 @@ class LoanInformation(models.Model):
     tag = models.BinaryField(max_length=66,blank=True, null=True, help_text="区块链中的唯一标识")
     installment_counter = models.IntegerField(default=0, help_text="分期数")
     repayment_counter = models.IntegerField(default=0, help_text="还款次数")
+    creator = models.CharField(max_length=64, blank=True, null=True, help_text='创建记录的account')
 
     class Meta:
         db_table = u'loaninformation'
@@ -57,6 +59,8 @@ class InstallmentInfo(models.Model):
     repay_time = models.DateTimeField(blank=True, help_text="应还时间")
     repay_amount = models.IntegerField(default=0, help_text="应还金额")
     tag = models.BinaryField(max_length=66,blank=True, null=True, help_text="区块链中的唯一标识")
+    creator = models.CharField(max_length=64, blank=True, null=True, help_text='创建记录的account')
+
     class Meta:
         db_table = u'installmentinfo'
 
@@ -73,6 +77,7 @@ class RepaymentInfo(models.Model):
     real_repay_amount = models.IntegerField(default=0, help_text="实际还款金额")
     repay_amount_type = models.IntegerField(choices=repay_amount_type_t, help_text='还款类型', blank=True)
     tag = models.BinaryField(max_length=66,blank=True, null=True, help_text="区块链中的唯一标识")
+    creator = models.CharField(max_length=64, blank=True, null=True, help_text='创建记录的account')
 
     class Meta:
         db_table = u'repaymentinfo'

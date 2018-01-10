@@ -56,15 +56,25 @@ def pure_get_exec(_ins, method, *args, **kwargs):
 def pull_installments(_ins, record, loan_index, expend_index, installment_counter):
     for index in range(1, installment_counter + 1):
         installment_number, repay_time, repay_amount, owner, _tag = pure_get_exec(_ins, UserContractMethods.GET_INSTALLMENT_BY_INDEX, loan_index, expend_index, index)
-        if owner == settings.BLOCKCHAIN_ACCOUNT:
-            print("self data!")
-            continue
+
         installment = InstallmentInfo.objects.get(tag=_tag.encode("raw_unicode_escape"))
+
         if installment:
-            installment.installment_number = installment_number
-            installment.repay_time = datetime.fromtimestamp(repay_time)
-            installment.repay_amount = repay_amount
-            installment.save()
+            if installment.creator != owner:
+                installment.creator = owner
+
+            if owner != settings.BLOCKCHAIN_ACCOUNT:
+                print("update %s" % installment)
+
+                if installment.installment_number != installment_number:
+                    installment.installment_number = installment_number
+
+                chain_date = datetime.fromtimestamp(repay_time)
+                if installment.repay_time != chain_date:
+                    installment.repay_time = chain_date
+
+                if installment.repay_amount != repay_amount:
+                    installment.repay_amount = repay_amount
 
         else:
             print("create installment!")
@@ -73,25 +83,38 @@ def pull_installments(_ins, record, loan_index, expend_index, installment_counte
                 installment_number=installment_number,
                 repay_time=datetime.fromtimestamp(repay_time),
                 repay_amount=repay_amount,
-                tag=_tag.encode("raw_unicode_escape")
+                tag=_tag.encode("raw_unicode_escape"),
+                creator=owner
             )
-            installment.save()
+        installment.save()
 
 
 def pull_repayments(_ins, record, loan_index, expend_index, repayment_counter):
     for index in range(1, repayment_counter + 1):
         installment_number, repay_amount, repay_time, overdue_days, repay_types, owner, _tag = pure_get_exec(_ins, UserContractMethods.GET_REPAYMENT_BY_INDEX, loan_index, expend_index, index)
-        if owner == settings.BLOCKCHAIN_ACCOUNT:
-            print("self data!")
-            continue
+
         repayment = RepaymentInfo.objects.get(tag=_tag.encode("raw_unicode_escape"))
+
         if repayment:
-            repayment.installment_number = installment_number
-            repayment.real_repay_time = datetime.fromtimestamp(repay_time)
-            repayment.overdue_days = overdue_days
-            repayment.real_repay_amount = repay_amount
-            repayment.repay_amount_type = repay_types
-            repayment.save()
+            if repayment.creator != owner:
+                repayment.creator = owner
+
+            if owner != settings.BLOCKCHAIN_ACCOUNT:
+                if repayment.installment_number != installment_number:
+                    repayment.installment_number = installment_number
+
+                chain_date = datetime.fromtimestamp(repay_time)
+                if repay_time.real_repay_time != chain_date:
+                    repayment.real_repay_time = chain_date
+
+                if repayment.overdue_days != overdue_days:
+                    repayment.overdue_days = overdue_days
+
+                if repayment.real_repay_amount != repay_amount:
+                    repayment.real_repay_amount = repay_amount
+
+                if repay_amount.repay_amount_type != repay_types:
+                    repayment.repay_amount_type = repay_types
 
         else:
             print("create repayment!")
@@ -102,9 +125,10 @@ def pull_repayments(_ins, record, loan_index, expend_index, repayment_counter):
                 overdue_days=overdue_days,
                 real_repay_amount=repay_amount,
                 repay_amount_type =repay_types,
-                tag=_tag.encode("raw_unicode_escape")
+                tag=_tag.encode("raw_unicode_escape"),
+                creator=owner
             )
-            repayment.save()
+        repayment.save()
 
 def pull_expends(_ins, record, loan_index, expend_times):
     for index in range(1, expend_times + 1):
@@ -113,25 +137,45 @@ def pull_expends(_ins, record, loan_index, expend_times):
 
         expend = LoanInformation.objects.get(tag=_tag.encode("raw_unicode_escape"))
 
-        if owner == settings.BLOCKCHAIN_ACCOUNT:
-            print("self data!")
-            expend.installment_counter = installment_counter
-            expend.repayment_counter = repayment_counter
-            expend.save()
-            continue
-
         if expend:
-            expend.apply_amount = apply_amount
-            expend.exact_amount = receive_amount
-            expend.apply_time = datetime.fromtimestamp(timestamp)
-            expend.interest = interest
-            expend.order_number = order_number
-            expend.overdue_days = overdue_days
-            expend.bank_card = bank_card
-            expend.reason = purpose.encode("raw_unicode_escape").decode("utf-8")
-            expend.installment_counter = installment_counter
-            expend.repayment_counter = repayment_counter
-            expend.save()
+
+            if expend.installment_counter != installment_counter: 
+                expend.installment_counter = installment_counter
+
+            if expend.repayment_counter != repayment_counter:
+                expend.repayment_counter = repayment_counter
+
+            if expend.creator != owner:
+                expend.creator = owner
+
+            if owner != settings.BLOCKCHAIN_ACCOUNT:
+                print("update %s!" % expend)
+
+                if expend.apply_amount != apply_amount:
+                    expend.apply_amount = apply_amount
+
+                if expend.exact_amount != receive_amount:
+                    expend.exact_amount = receive_amount
+
+                chain_date = datetime.fromtimestamp(timestamp)
+                if expend.apply_time != chain_date:
+                    expend.apply_time = chain_date
+                
+                if expend.interest != interest:
+                    expend.interest = interest
+
+                if expend.order_number != order_number:
+                    expend.order_number = order_number
+
+                if expend.overdue_days != overdue_days:
+                    expend.overdue_days = overdue_days
+                
+                if expend.bank_card != bank_card:
+                    expend.bank_card = bank_card
+
+                chain_purpose = purpose.encode("raw_unicode_escape").decode("utf-8")
+                if expend.reason != chain_purpose:
+                    expend.reason = chain_purpose
 
         else:
             print("create expend!")
@@ -148,15 +192,12 @@ def pull_expends(_ins, record, loan_index, expend_times):
                  tag=_tag, 
                  installment_counter=installment_counter, 
                  repayment_counter=repayment_counter, 
+                 creator=owner
             )
-            expend.save()
+        expend.save()
 
         pull_installments(_ins, expend, loan_index, index, installment_counter)
         pull_repayments(_ins, expend, loan_index, index, repayment_counter)
-
-        expend.installment_counter = installment_counter
-        expend.repayment_counter = repayment_counter
-        expend.save()
 
 
 def pull_loans(_ins, record, loan_times):
@@ -166,30 +207,35 @@ def pull_loans(_ins, record, loan_times):
 
         loan  = PlatFormInfo.objects.get(tag=loan_tag.encode("raw_unicode_escape"))
 
-        if owner == settings.BLOCKCHAIN_ACCOUNT:
-            print("self data!")
-            loan.expend_counter = expend_times
-            loan.save()
-            continue
-
+        chain_platform = platform.encode("raw_unicode_escape").decode("utf-8")
         if loan:
-            loan.platform = platform.encode("raw_unicode_escape").decode("utf-8")
-            loan.credit_ceiling = credit
-            loan.expend_counter = expend_times
-            loan.save()
+            if loan.creator != owner:
+                loan.creator = owner
+
+            if loan.expend_counter!= expend_times:
+                loan.expend_counter = expend_times
+
+            if owner != settings.BLOCKCHAIN_ACCOUNT:
+                print("update %s" % loan)
+
+                if loan.platform != chain_platform:
+                    loan.platform = chain_platform
+
+                if loan.credit_ceiling != credit:
+                    loan.credit_ceiling = credit
+
         else:
             print("create loan!")
             loan = LoanInformation(
-                platform=platform.encode("raw_unicode_escape").decode("utf-8"), 
+                platform=chain_platform, 
                 credit_ceiling=credit, 
                 expend_counter=expend_times, 
                 tag=loan_tag.encode("raw_unicode_escape"),
-                owner=record
+                owner=record,
+                creator=owner
             )
-            loan.save()
-        pull_expends(_ins, loan, index, expend_times)
-        loan.expend_counter = expend_times
         loan.save()
+        pull_expends(_ins, loan, index, expend_times)
 
 
 def pull_blockchain_data():
