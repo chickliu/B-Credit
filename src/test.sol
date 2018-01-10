@@ -118,6 +118,11 @@ contract UserContract {
         
     }
     
+    function resetOwner(address newOwner) public {
+        require(owner == tx.origin);
+        owner = newOwner;
+    }
+    
     function getCaller() public view returns (address) {
         return tx.origin;
     }
@@ -195,6 +200,13 @@ contract UserContract {
     function getLoanByTag(bytes32 _userTag) public view returns (bytes32, uint32, uint32, address) {
         loan storage _loan = _getLoanByTag(_userTag);
         return (_loan.platform, _loan.creditLimit, _loan.expenditureCounter, _loan.owner);
+    }
+    
+    function resetLoanOwner(uint32 _loanId, address newOwner) public {
+        loan storage _loan = _getLoanById(_loanId);
+        require(_loan.owner == tx.origin);
+        _loan.owner = newOwner;
+        latestUpdate = now;
     }
 
     function insertExpend(
@@ -288,6 +300,14 @@ contract UserContract {
         loan storage _loan = _getLoanByIndex(_loanIndex);
         _expend = _getExpendFromLoanByIndex(_loan, _expendIndex);
     }
+    
+    function resetExpendOwner(uint32 _loanId, uint32 _expendId, address newOwner) public {
+        expenditure storage _expend = _getExpendById(_loanId, _expendId);
+        require(_expend.owner == tx.origin);
+        _expend.owner = newOwner;
+        latestUpdate = now;
+    }
+
     
     function getExpendByIndex(
         uint32 _loanIndex, 
@@ -400,6 +420,13 @@ contract UserContract {
         _installment = _getInstallmentFromExpendByIndex(_expend, _installmentIndex);
     }
     
+    function resetInstallmentOwner(uint32 _loanId, uint32 _expendId, uint32 _installmentId, address newOwner) public {
+        installment storage _installment = _getInstallmentById(_loanId, _expendId, _installmentId);
+        require(_installment.owner == tx.origin);
+        _installment.owner = newOwner;
+        latestUpdate = now;
+    }
+    
     function getInstallmentByIndex(
         uint32 _loanIndex, 
         uint32 _expendIndex,
@@ -505,6 +532,13 @@ contract UserContract {
     function _getRepaymentByIndex(uint32 _loanIndex, uint32 _expendIndex, uint32 _repaymentIndex) internal view returns (repayment storage _repayment) {
         expenditure storage _expend = _getExpendByIndex(_loanIndex, _expendIndex);
         _repayment = _getRepaymentFromExpendByIndex(_expend, _repaymentIndex);
+    }
+    
+    function resetRepaymentOwner(uint32 _loanId, uint32 _expendId, uint32 _repaymentId, address newOwner) public {
+        repayment storage _repayment = _getRepaymentById(_loanId, _expendId, _repaymentId);
+        require(_repayment.owner == tx.origin);
+        _repayment.owner = newOwner;
+        latestUpdate = now;
     }
     
     function getRepaymentByIndex(
