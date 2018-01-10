@@ -16,3 +16,6 @@ static/
 *.xls
 *gitmodules
 migrations/
+test-map-contract-abi.json
+test-user-contract-abi.json
+test.json
