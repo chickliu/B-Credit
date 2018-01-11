@@ -1,4 +1,5 @@
 import os
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "btc_cacheserver.settings")
 import json
 import time
 
