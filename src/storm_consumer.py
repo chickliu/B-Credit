@@ -17,6 +17,8 @@ import traceback
 from amqpstorm import Connection
 from web3 import Web3, RPCProvider
 from web3.contract import ConciseContract
+from django.db import connection
+from django.db.utils import OperationalError
 
 from btc_cacheserver import settings
 from btc_cacheserver.defines import WriteChainMsgTypes, UserMapsContractMethods, UserContractMethods
@@ -109,6 +111,12 @@ def create_user_contract(user_id, *args):
             user.save()
 
         return result 
+
+    except OperationalError as dbe:
+        print(dbe, dir(dbe), traceback.format_exc())
+        connection.close()
+        return False
+
     except Exception as e:
         print(traceback.format_exc())
         return False
@@ -143,6 +151,11 @@ def update_loan(user_id, loan_id, *args):
             loan.save()
 
         return result
+
+    except OperationalError as dbe:
+        print(dbe, dir(dbe), traceback.format_exc())
+        connection.close()
+        return False
 
     except Exception as e:
         print(traceback.format_exc())
@@ -181,6 +194,11 @@ def update_expend(user_id, loan_id, expend_id, *args):
             expend.save()
 
         return result
+
+    except OperationalError as dbe:
+        print(dbe, dir(dbe), traceback.format_exc())
+        connection.close()
+        return False
 
     except Exception as e:
         print(traceback.format_exc())
@@ -224,6 +242,11 @@ def update_installment(user_id, loan_id, expend_id, installment_id, *args):
 
         return result
 
+    except OperationalError as dbe:
+        print(dbe, dir(dbe), traceback.format_exc())
+        connection.close()
+        return False
+
     except Exception as e:
         print(traceback.format_exc())
         return False
@@ -266,6 +289,11 @@ def update_repayment(user_id, loan_id, expend_id, repayment_id, *args):
             repayment.save()
 
         return result
+
+    except OperationalError as dbe:
+        print(dbe, dir(dbe), traceback.format_exc())
+        connection.close()
+        return False
 
     except Exception as e:
         print(traceback.format_exc())
