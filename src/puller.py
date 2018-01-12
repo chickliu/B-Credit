@@ -222,7 +222,7 @@ def pull_expends(_ins, record, loan_index, expend_times):
                  interest=interest, 
                  bank_card=chain_bank_card, 
                  overdue_days=overdue_days, 
-                 tag=_tag, 
+                 tag=bytes_tag, 
                  installment_counter=installment_counter, 
                  repayment_counter=repayment_counter, 
                  creator=owner
