@@ -13,8 +13,8 @@ class User(models.Model):
     phone_no = models.CharField(max_length=20, help_text="用户电话")
     id_no = models.CharField(max_length=20, blank=True, null=True, help_text="身份证号")
     contract = models.CharField(max_length=66, blank=True, null=True, help_text="合约地址")
-    loan_counter = models.IntegerField(default=0, help_text="借贷次数")
-    latest_update = models.BigIntegerField(default=0, help_text="最后更新时间戳")
+    loan_counter = models.IntegerField(default=0, blank=True, help_text="借贷次数")
+    latest_update = models.BigIntegerField(default=0, blank=True, help_text="最后更新时间戳")
 
     class Meta:
         db_table = u'users'
@@ -28,7 +28,7 @@ class PlatFormInfo(models.Model):
     platform = models.CharField(max_length=64, help_text="所属平台")
     credit_ceiling = models.IntegerField(default=0, help_text="授信额度")
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    expend_counter = models.IntegerField(default=0, help_text="支用次数")
+    expend_counter = models.IntegerField(default=0, blank=True, help_text="支用次数")
     tag = models.BinaryField(max_length=66,blank=True, null=True, help_text="区块链中的唯一标识")
     creator = models.CharField(max_length=64, blank=True, null=True, help_text='创建记录的account')
 
@@ -46,8 +46,8 @@ class LoanInformation(models.Model):
     bank_card = models.CharField(max_length=64, help_text='此次交易所属的银行卡', null=True, blank=True)
     overdue_days = models.IntegerField(default=0, help_text='当前逾期天数')
     tag = models.BinaryField(max_length=66,blank=True, null=True, help_text="区块链中的唯一标识")
-    installment_counter = models.IntegerField(default=0, help_text="分期数")
-    repayment_counter = models.IntegerField(default=0, help_text="还款次数")
+    installment_counter = models.IntegerField(default=0, blank=True, help_text="分期数")
+    repayment_counter = models.IntegerField(default=0, blank=True, help_text="还款次数")
     creator = models.CharField(max_length=64, blank=True, null=True, help_text='创建记录的account')
 
     class Meta:
