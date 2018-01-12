@@ -61,8 +61,11 @@ def pull_installments(_ins, record, loan_index, expend_index, installment_counte
 
         installment_number, repay_time, repay_amount, owner, _tag = pure_get_exec(_ins, UserContractMethods.GET_INSTALLMENT_BY_INDEX, loan_index, expend_index, index)
         
+        bytes_tag = _tag.encode('raw_unicode_escape')
+        chain_date = datetime.fromtimestamp(repay_time)
+
         try:
-            installment = InstallmentInfo.objects.get(tag=_tag.encode("raw_unicode_escape"))
+            installment = InstallmentInfo.objects.get(tag=bytes_tag)
 
             if installment.creator != owner:
                 installment.creator = owner
@@ -73,7 +76,6 @@ def pull_installments(_ins, record, loan_index, expend_index, installment_counte
                 if installment.installment_number != installment_number:
                     installment.installment_number = installment_number
 
-                chain_date = datetime.fromtimestamp(repay_time)
                 if installment.repay_time != chain_date:
                     installment.repay_time = chain_date
 
@@ -87,9 +89,9 @@ def pull_installments(_ins, record, loan_index, expend_index, installment_counte
             installment = InstallmentInfo(
                 loan_info=record,
                 installment_number=installment_number,
-                repay_time=datetime.fromtimestamp(repay_time),
+                repay_time=chain_date,
                 repay_amount=repay_amount,
-                tag=_tag.encode("raw_unicode_escape"),
+                tag=bytes_tag,
                 creator=owner
             )
 
@@ -104,8 +106,11 @@ def pull_repayments(_ins, record, loan_index, expend_index, repayment_counter):
 
         installment_number, repay_amount, repay_time, overdue_days, repay_types, owner, _tag = pure_get_exec(_ins, UserContractMethods.GET_REPAYMENT_BY_INDEX, loan_index, expend_index, index)
 
+        bytes_tag = _tag.encode('raw_unicode_escape')
+        chain_date = datetime.fromtimestamp(repay_time)
+
         try:
-            repayment = RepaymentInfo.objects.get(tag=_tag.encode("raw_unicode_escape"))
+            repayment = RepaymentInfo.objects.get(tag=bytes_tag)
 
             if repayment.creator != owner:
                 repayment.creator = owner
@@ -114,7 +119,6 @@ def pull_repayments(_ins, record, loan_index, expend_index, repayment_counter):
                 if repayment.installment_number != installment_number:
                     repayment.installment_number = installment_number
 
-                chain_date = datetime.fromtimestamp(repay_time)
                 if repay_time.real_repay_time != chain_date:
                     repayment.real_repay_time = chain_date
 
@@ -134,11 +138,11 @@ def pull_repayments(_ins, record, loan_index, expend_index, repayment_counter):
             repayment = RepaymentInfo(
                 loan_info=record, 
                 installment_number=installment_number,
-                real_repay_time=datetime.fromtimestamp(repay_time),
+                real_repay_time=chain_date,
                 overdue_days=overdue_days,
                 real_repay_amount=repay_amount,
                 repay_amount_type =repay_types,
-                tag=_tag.encode("raw_unicode_escape"),
+                tag=bytes_tag,
                 creator=owner
             )
 
@@ -155,9 +159,16 @@ def pull_expends(_ins, record, loan_index, expend_times):
         print("times: ", installment_counter, repayment_counter)
 
         chain_purpose = purpose.replace("\x00", "").encode("raw_unicode_escape").decode("utf-8")
+        # chain_purpose = w3.toText(purpose.encode("raw_unicode_escape"))
+        # chain_order_number = w3.toText(order_number.encode('raw_unicode_escape'))
+        # chain_bank_card = w3.toText(bank_card.encode('raw_unicode_escape'))
+        chain_order_number = order_number.replace("\x00", "").encode("raw_unicode_escape").decode("utf-8")
+        chain_bank_card = bank_card.replace("\x00", "").encode("raw_unicode_escape").decode("utf-8")
+        chain_date = datetime.fromtimestamp(timestamp)
+        bytes_tag = _tag.encode('raw_unicode_escape')
 
         try:
-            expend = LoanInformation.objects.get(tag=_tag.encode("raw_unicode_escape"))
+            expend = LoanInformation.objects.get(tag=bytes_tag)
 
             if expend.installment_counter != installment_counter: 
                 expend.installment_counter = installment_counter
@@ -177,21 +188,22 @@ def pull_expends(_ins, record, loan_index, expend_times):
                 if expend.exact_amount != receive_amount:
                     expend.exact_amount = receive_amount
 
-                chain_date = datetime.fromtimestamp(timestamp)
                 if expend.apply_time != chain_date:
                     expend.apply_time = chain_date
                 
                 if expend.interest != interest:
                     expend.interest = interest
 
-                if expend.order_number != order_number:
-                    expend.order_number = order_number
+                if expend.order_number != chain_order_number:
+                    print("ordernumber:", expend.order_number, chain_order_number)
+                    expend.order_number = chain_order_number
 
                 if expend.overdue_days != overdue_days:
                     expend.overdue_days = overdue_days
                 
-                if expend.bank_card != bank_card:
-                    expend.bank_card = bank_card
+                if expend.bank_card !=chain_bank_card:
+                    print("bankcard:", expend.bank_card, chain_bank_card)
+                    expend.bank_card = chain_bank_card
 
                 if expend.reason != chain_purpose:
                     expend.reason = chain_purpose
@@ -202,13 +214,13 @@ def pull_expends(_ins, record, loan_index, expend_times):
 
             expend = LoanInformation(
                  platform=record, 
-                 order_number=order_number,
+                 order_number=chain_order_number,
                  apply_amount=apply_amount, 
                  exact_amount=receive_amount, 
                  reason=chain_purpose,
-                 apply_time=datetime.fromtimestamp(timestamp), 
+                 apply_time=chain_date, 
                  interest=interest, 
-                 bank_card=bank_card, 
+                 bank_card=chain_bank_card, 
                  overdue_days=overdue_days, 
                  tag=_tag, 
                  installment_counter=installment_counter, 
@@ -228,14 +240,17 @@ def pull_loans(_ins, record, loan_times):
 
     for index in range(1, loan_times + 1):
 
-        platform, credit, expend_times, owner, loan_tag = pure_get_exec(_ins, UserContractMethods.GET_LOAN_BY_INDEX, index)
+        platform, credit, expend_times, owner, _tag = pure_get_exec(_ins, UserContractMethods.GET_LOAN_BY_INDEX, index)
 
         print("expend_times: ", expend_times)
 
         chain_platform = platform.replace("\x00", "").encode("raw_unicode_escape").decode("utf-8")
+        # chain_platform = w3.toText(platform.encode("raw_unicode_escape"))
+        bytes_tag = _tag.encode('raw_unicode_escape')
 
         try:
-            loan  = PlatFormInfo.objects.get(tag=loan_tag.encode("raw_unicode_escape"))
+            loan  = PlatFormInfo.objects.get(tag=bytes_tag)
+            # loan  = PlatFormInfo.objects.get(tag=w3.toBytes(loan_tag.encode('raw_unicode_escape')))
             if loan.creator != owner:
                 loan.creator = owner
 
@@ -259,7 +274,7 @@ def pull_loans(_ins, record, loan_times):
                 platform=chain_platform, 
                 credit_ceiling=credit, 
                 expend_counter=expend_times, 
-                tag=loan_tag.encode("raw_unicode_escape"),
+                tag=bytes_tag,
                 owner=record,
                 creator=owner
             )

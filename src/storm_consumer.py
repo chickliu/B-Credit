@@ -29,6 +29,7 @@ contract_instances = {}
 
 provider = RPCProvider(host=settings.BLOCKCHAIN_RPC_HOST, port=settings.BLOCKCHAIN_RPC_PORT)
 w3 = Web3(provider)
+w3.eth.defaultAccount = settings.BLOCKCHAIN_ACCOUNT
 
 transact_kwargs = {"from": settings.BLOCKCHAIN_ACCOUNT, "gas": settings.BLOCKCHAIN_CALL_GAS_LIMIT, }
 
