@@ -17,10 +17,15 @@ from django.contrib import admin
 from django.urls import path
 from btc_cacheserver.contract.views import update_load_data, \
     update_repayment_data, get_user_data
+from btc_cacheserver.blockchain.views import get_block_detail_info, \
+    get_transaction_detail_info, get_blocknumber_recording
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('bc/loan/update/', update_load_data),
     path('bc/repayment/update/', update_repayment_data),
-    path('^bc/query/$', get_user_data),
+    path('bc/query/', get_user_data),
+    path('chain/block/(?P<number>\d+)', get_block_detail_info),
+    path('chain/tx/(?P<txhash>[A-Za-z0-9]+)', get_transaction_detail_info),
+    path('chain/blocknumber/', get_blocknumber_recording),
 ]
