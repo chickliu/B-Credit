@@ -73,8 +73,9 @@ def get_transaction_detail_info(request, txhash):
         return JsonResponse({"msg": "Transaction hash is error.", "code": -1})
 
     try:
-        transaction_info = w3.eth.getTransaction(txhash)
-        transaction_receipt = w3.eth.getTransactionReceipt(txhash)
+        _txhash = "0x" + txhash
+        transaction_info = w3.eth.getTransaction(_txhash)
+        transaction_receipt = w3.eth.getTransactionReceipt(_txhash)
         block_info = w3.eth.getBlock(transaction_info.blockNumber)
 
         data = {"msg": "",
