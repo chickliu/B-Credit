@@ -7,6 +7,7 @@ import time
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.db.models import Q
 from web3 import Web3, RPCProvider
 
 from btc_cacheserver import settings
@@ -114,14 +115,15 @@ def get_transaction_detail_info(request, txhash):
 @require_http_methods(['GET'])
 @csrf_exempt
 def get_blocknumber_recording(request):
-    phone_no = request.GET.get('start_time', '')
-    id_no = request.GET.get('end_time', '')
-
-    if phone_no and id_no:
-        pass
+    t_start = request.GET.get('start_time', '')
+    t_end = request.GET.get('end_time', '')
 
     try:
-        block_recording = BlockNumberRecording.objects.all()
+        if t_start and t_end:
+            datetime_query = Q(time__range=(t_start, t_end))
+            block_recording = BlockNumberRecording.objects.filter(datetime_query)
+        else:
+            block_recording = BlockNumberRecording.objects.all()
 
         number_list = [block.blocknumber for block in block_recording]
         time_list = [block.time for block in block_recording]
