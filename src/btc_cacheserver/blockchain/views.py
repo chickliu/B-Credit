@@ -26,6 +26,10 @@ def get_block_detail_info(request, number):
 
     try:
         block_info = w3.eth.getBlock(int(number))
+
+        if not block_info:
+            Log.warn("Block is not exist.")
+            return JsonResponse({"msg": "Block is not exist.", "code": -1})
         transactions = block_info.transactions
 
         trans_info = []
@@ -75,6 +79,11 @@ def get_transaction_detail_info(request, txhash):
     try:
         _txhash = "0x" + txhash
         transaction_info = w3.eth.getTransaction(_txhash)
+        if not transaction_info:
+            Log.warn("Transaction is not exist.")
+            return JsonResponse(
+                {"msg": "Transaction is not exist.", "code": -1})
+
         transaction_receipt = w3.eth.getTransactionReceipt(_txhash)
         block_info = w3.eth.getBlock(transaction_info.blockNumber)
 
