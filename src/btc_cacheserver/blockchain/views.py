@@ -12,6 +12,7 @@ from web3 import Web3, RPCProvider
 
 from btc_cacheserver import settings
 from btc_cacheserver.blockchain.models import BlockNumberRecording
+from btc_cacheserver.contract.models import PlatFormInfo, LoanInformation, RepaymentInfo
 
 Log = logging.getLogger("scripts")
 provider = RPCProvider(host=settings.BLOCKCHAIN_RPC_HOST, port=settings.BLOCKCHAIN_RPC_PORT)
@@ -134,6 +135,33 @@ def get_blocknumber_recording(request):
             "blockchain": {
                 "blocknumber": number_list,
                 "time": time_list
+            }
+        }
+
+        return JsonResponse(data)
+    except Exception as err:
+        Log.error(str(err), exc_info=True)
+        return JsonResponse({
+            'code': -1,
+            'msg': str(err)
+        })
+
+
+@require_http_methods(['GET'])
+@csrf_exempt
+def get_total_number(request):
+    try:
+        total_platform = PlatFormInfo.objects.count()
+        total_loan = LoanInformation.objects.count()
+        total_repay = RepaymentInfo.objects.count()
+
+        data = {
+            "msg": "",
+            "code": 0,
+            "blockchain": {
+                "total_platform": total_platform,
+                "total_loan": total_loan,
+                "total_repay": total_repay
             }
         }
 
