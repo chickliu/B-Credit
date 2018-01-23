@@ -15,27 +15,64 @@ class WriteChainMsgTypes(object):
     MSG_TYPE_REPAYMENT = "repayment"
 
 
-class UserMapsContractMethods(object):
-    CREATE_USER_CONTRACT = 'createUserContract'
-    GET_USER_CONTRACT_ADDR = 'getUserContractAddr'
-    GET_USER_CONTRACT_ADDR_BY_TAG = 'getUserContractAddrByTag'
-    GET_USER_TAG = 'getUserTag'
+class ContractNames(object):
+    ROLES               = "Roles"
+    RBAC                = "RBAC"
+    PAUSABLE            = "Pausable"
+
+    CONTROLLER_ROUTE    = "ControllerRoute"
+    DATA_STORE_ROUTE    = "DataStoreRoute"
+    INTERFACE           = "Interface"
+    USER_CONTROLLER     = "UserController"
+    USER_CONTRACT_STORE = "UserContractStore"
+    USER_CONTRACT       = "UserContract"
+    LOAN_DATA_STORE     = "LoanDataStore"
 
 
-class UserContractMethods(object):
-    EXPENDITURE_TAG = 'expenditureTag' 
-    LOAN_TAG = 'loanTag'
-    REPAYMENT_TAG = 'repaymentTag'
-    INSTALLMENT_TAG = 'installmentTag'
+class ContractMethodsBase(object):
+    ROLE_WRITER       = "writer"
+    ROLE_CALLER       = "caller"
 
-    GET_LOAN_TIMES = 'getLoanTimes'
-    GET_LATEST_UPDATE = 'getLatestUpdate'
-    GET_REPAYMENT_BY_INDEX = 'getRepaymentByIndex'
-    GET_EXPEND_BY_INDEX = 'getExpendByIndex'
-    GET_INSTALLMENT_BY_INDEX = 'getInstallmentByIndex'
-    GET_LOAN_BY_INDEX = 'getLoanByIndex'
+    # "checkRole"
+    # "hasRole"
+    ADMIN_REMOVE_ROLE = "adminRemoveRole"
+    ADMIN_ADD_ROLE    = "adminAddRole"
+    UNPAUSE           = "unpause"
+    PAUSE             = "pause"
 
-    UPDATE_LOAN = 'updateLoan'
-    UPDATE_REPAYMENT = 'updateRepayment'
-    UPDATE_INSTALLMENT = 'updateInstallment'
-    UPDATE_EXPEND = 'updateExpend'
+
+class LoanMethods(ContractMethodsBase):
+    GET_LOAN_TIMES           = "getLoanTimes"
+    GET_LATEST_UPDATE        = "getLatestUpdate"
+    GET_LOAN_BY_INDEX        = "getLoanByIndex"
+    GET_EXPEND_BY_INDEX      = "getExpendByIndex"
+    GET_INSTALLMENT_BY_INDEX = "getInstallmentByIndex"
+    GET_REPAYMENT_BY_INDEX   = "getRepaymentByIndex"
+
+    UPDATE_LOAN              = "updateLoan"
+    UPDATE_EXPEND            = "updateExpenditure"
+    UPDATE_INSTALLMENT       = "updateInstallment"
+    UPDATE_REPAYMENT         = "updateRepayment"
+
+
+class UserContractMethods(LoanMethods):
+    SET_STORE    = "setStore"
+    SET_ROUTER   = "setRouter"
+
+    GET_USER_TAG = "getUserTag"
+
+class InterfaceMethods(LoanMethods):
+    SET_ROUTER             = "setRouter"
+    SET_CONTROLLER         = "setController"
+    GET_CONTROLLER_ADDRESS = "getControllerAddress"
+
+
+class StoreMethods(ContractMethodsBase):
+    SET_ADDRESS         = "setAddress"
+    SET_CURRENT_VERSION = "setCurrentVersion"
+    GET_MAX_VERSION     = "getMaxVersion"
+    GET_CURRENT_VERSION = "getCurrentVersion"
+    GET_ADDRESS         = "getAddress"
+    GET_CURRENT_ADDRESS = "getCurrentAddress"
+
+

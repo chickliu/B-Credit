@@ -122,3 +122,4 @@ contract UserContractStore is Pausable {
         dest = getAddress(user_tag, getCurrentVersion(user_tag));
     }
 }
+

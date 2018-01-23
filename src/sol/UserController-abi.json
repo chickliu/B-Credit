@@ -644,6 +644,28 @@
   },
   {
     "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "origin",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "caller",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "user_contract_store_address",
+        "type": "address"
+      }
+    ],
+    "name": "UserControllerSetStore",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
     "inputs": [],
     "name": "Pause",
     "type": "event"

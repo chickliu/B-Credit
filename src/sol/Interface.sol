@@ -7,18 +7,22 @@ import {UserController} from "./UserController.sol";
 contract Interface is Pausable {
     ControllerRoute router;
     
-    string public constant USER_CONTROLLER = "UserController";
-    
     //event
     event InterfaceSetRouter(
         address origin, 
         address caller, 
         address controller_route_address
     );
+    event InterfaceSetController(
+        address origin,
+        address caller,
+        string controller_name,
+        address controller_address
+    );
     event WriteData(
         address origin,
         address caller,
-        uint256 block_number,
+        uint256 tx_hash,
         string types
     );
     
@@ -65,6 +69,23 @@ contract Interface is Pausable {
         );
     }
     
+    function setController(
+        string _controller_name,
+        address _contorller_address
+    )
+    whenNotPaused canWrite public
+    {
+        router.setAddress(_controller_name, _contorller_address, true);
+    
+        //event
+        InterfaceSetController(
+            tx.origin,
+            msg.sender,
+            _controller_name,
+            _contorller_address
+        );
+    }
+    
     function getControllerAddress(
         string _controller_name
     )
@@ -90,6 +111,7 @@ contract Interface is Pausable {
     }
     
     function getLoanTimes(
+        string _controller_name,
         bytes32 _user_tag
     ) 
     whenNotPaused canCall public view 
@@ -97,10 +119,11 @@ contract Interface is Pausable {
         uint32
     ) 
     {
-        return _getUserController(USER_CONTROLLER).getLoanTimes(_user_tag);
+        return _getUserController(_controller_name).getLoanTimes(_user_tag);
     }
     
     function getLatestUpdate(
+        string _controller_name,
         bytes32 _user_tag
     ) 
     whenNotPaused canCall public view 
@@ -108,10 +131,11 @@ contract Interface is Pausable {
         uint
     ) 
     {
-        return _getUserController(USER_CONTROLLER).getLatestUpdate(_user_tag);
+        return _getUserController(_controller_name).getLatestUpdate(_user_tag);
     }
     
     function updateLoan(
+        string _controller_name,
         bytes32 _user_tag,   // 用户唯一标识
         bytes32 _loan_tag,   // 借贷记录唯一标识
         bytes32 _platform,   // 平台
@@ -119,7 +143,7 @@ contract Interface is Pausable {
     ) 
     whenNotPaused canWrite public 
     {
-        _getUserController(USER_CONTROLLER).updateLoan(
+        _getUserController(_controller_name).updateLoan(
             _user_tag, 
             _loan_tag, 
             _platform, 
@@ -136,6 +160,7 @@ contract Interface is Pausable {
     }
     
     function getLoanByIndex(
+        string _controller_name,
         bytes32 _user_tag,  // 用户唯一标识
         uint32 _index       // 插入借贷记录时的loanCounter值
     ) 
@@ -147,13 +172,14 @@ contract Interface is Pausable {
         uint32   // 授信额度
     ) 
     {
-        return _getUserController(USER_CONTROLLER).getLoanByIndex(
+        return _getUserController(_controller_name).getLoanByIndex(
             _user_tag, 
             _index
         );
     }
     
     function updateExpenditure(
+        string _controller_name,
         bytes32 _user_tag,     // 用户唯一标识
         bytes32 _loan_tag,     // 借贷记录唯一标识
         bytes32 _expend_tag,   // 支用记录唯一标识
@@ -168,7 +194,7 @@ contract Interface is Pausable {
     ) 
     whenNotPaused canWrite public 
     {
-        _getUserController(USER_CONTROLLER).updateExpenditure(
+        _getUserController(_controller_name).updateExpenditure(
             _user_tag,
             _loan_tag,
             _expend_tag,
@@ -192,6 +218,7 @@ contract Interface is Pausable {
     }
     
     function getExpendByIndex(
+        string _controller_name,
         bytes32 _user_tag,    // 用户唯一标识
         uint32 _loan_index,   // 插入借贷记录时的loanCounter值
         uint32 _expend_index  // 插入支用记录时的expenditureCounter值
@@ -211,7 +238,7 @@ contract Interface is Pausable {
         uint      // 利息
     ) 
     {
-        return _getUserController(USER_CONTROLLER).getExpendByIndex(
+        return _getUserController(_controller_name).getExpendByIndex(
             _user_tag, 
             _loan_index, 
             _expend_index
@@ -219,6 +246,7 @@ contract Interface is Pausable {
     }
     
     function updateInstallment(
+        string _controller_name,
         bytes32 _user_tag,          // 用户唯一标识
         bytes32 _loan_tag,          // 借贷记录唯一标识
         bytes32 _expend_tag,        // 支用记录唯一标识
@@ -229,7 +257,7 @@ contract Interface is Pausable {
     ) 
     whenNotPaused canWrite public 
     {
-        _getUserController(USER_CONTROLLER).updateInstallment(
+        _getUserController(_controller_name).updateInstallment(
             _user_tag,
             _loan_tag,
             _expend_tag,
@@ -249,6 +277,7 @@ contract Interface is Pausable {
     }
     
     function getInstallmentByIndex(
+        string _controller_name,
         bytes32 _user_tag,          // 用户唯一标识
         uint32 _loan_index,       // 插入借贷记录时的loanCounter值
         uint32 _expend_index,     // 插入支用记录时的expenditureCounter值
@@ -262,7 +291,7 @@ contract Interface is Pausable {
         uint     // 还款金额
     ) 
     {
-        return _getUserController(USER_CONTROLLER).getInstallmentByIndex(
+        return _getUserController(_controller_name).getInstallmentByIndex(
             _user_tag,
             _loan_index, 
             _expend_index,
@@ -271,6 +300,7 @@ contract Interface is Pausable {
     }
     
     function updateRepayment(
+        string _controller_name,
         bytes32 _user_tag,          // 用户唯一标识
         bytes32 _loan_tag,          // 借贷记录唯一标识
         bytes32 _expend_tag,        // 支用记录唯一标识
@@ -283,7 +313,7 @@ contract Interface is Pausable {
     ) 
     whenNotPaused canWrite public 
     {
-        _getUserController(USER_CONTROLLER).updateRepayment(
+        _getUserController(_controller_name).updateRepayment(
             _user_tag,
             _loan_tag,
             _expend_tag,
@@ -305,6 +335,7 @@ contract Interface is Pausable {
     }
     
     function getRepaymentByIndex(
+        string _controller_name,
         bytes32 _user_tag,          // 用户唯一标识
         uint32 _loan_index,     // 插入借贷记录时loanCounter的值
         uint32 _expend_index,   // 插入支用记录时expenditureCounter的值
@@ -320,7 +351,7 @@ contract Interface is Pausable {
         uint     // 还款时间
     ) 
     {
-        return _getUserController(USER_CONTROLLER).getRepaymentByIndex(
+        return _getUserController(_controller_name).getRepaymentByIndex(
             _user_tag,
             _loan_index, 
             _expend_index, 

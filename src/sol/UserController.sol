@@ -8,13 +8,17 @@ import {UserContract} from "./UserContract.sol";
 contract UserController is Pausable {
 
     DataStoreRoute router;
-    UserContractStore store;
     
     //event
     event UserControllerSetRouter(
         address origin, 
         address caller, 
         address data_store_route_address
+    );
+    event UserControllerSetStore(
+        address origin, 
+        address caller, 
+        address user_contract_store_address
     );
     
     function UserController(
@@ -65,8 +69,25 @@ contract UserController is Pausable {
     ) 
     whenNotPaused canWrite public 
     {
-        store = UserContractStore(_user_contract_store_address);
         router.setAddress(this, _user_contract_store_address, true);
+        
+        //event
+        UserControllerSetStore(
+            tx.origin,
+            msg.sender,
+            _user_contract_store_address
+        );
+    }
+    
+    function _getStore(
+    
+    )
+    whenNotPaused canCall internal view
+    returns (
+        UserContractStore store
+    )
+    {
+        store = UserContractStore(router.getCurrentAddress(this));
     }
     
     function getUserContractAddress(
@@ -77,7 +98,7 @@ contract UserController is Pausable {
         address
     )
     {
-        return store.getCurrentAddress(_user_tag);
+        return _getStore().getCurrentAddress(_user_tag);
     }
     
     function _getUserContract(

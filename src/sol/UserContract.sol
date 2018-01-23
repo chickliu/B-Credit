@@ -6,9 +6,8 @@ import {LoanDataStore} from "./LoanDataStore.sol";
 
 contract UserContract is Pausable {
     bytes32 public userTag;
-    address public self;
+    
     DataStoreRoute router;
-    LoanDataStore store;
     
     event UserContractSetRouter(
         address origin, 
@@ -67,11 +66,10 @@ contract UserContract is Pausable {
     ) 
     whenNotPaused canWrite public
     {
-        store = LoanDataStore(_user_data_store_address);
         router.setAddress(this, _user_data_store_address, true);
     }
     
-    function getUserTage(
+    function getUserTag(
     
     )
     whenNotPaused canCall public view
@@ -82,6 +80,17 @@ contract UserContract is Pausable {
         return userTag;
     }
     
+    function _getStore(
+    
+    )
+    whenNotPaused canCall internal view
+    returns (
+        LoanDataStore store
+    )
+    {
+        store = LoanDataStore(router.getCurrentAddress(this));
+    }
+    
     function getLoanTimes(
     
     ) 
@@ -90,7 +99,7 @@ contract UserContract is Pausable {
         uint32
     ) 
     {
-        return store.getLoanTimes();
+        return _getStore().getLoanTimes();
     }
     
     function getLatestUpdate(
@@ -101,7 +110,7 @@ contract UserContract is Pausable {
         uint
     ) 
     {
-        return store.getLatestUpdate();
+        return _getStore().getLatestUpdate();
     }
     
     function updateLoan(
@@ -111,7 +120,7 @@ contract UserContract is Pausable {
     ) 
     whenNotPaused canWrite public 
     {
-        store.updateLoan(_loan_tag, _platform, _credit_limit);
+        _getStore().updateLoan(_loan_tag, _platform, _credit_limit);
     }
     
     function getLoanByIndex(
@@ -125,7 +134,7 @@ contract UserContract is Pausable {
         uint32   // 授信额度
     ) 
     {
-        return store.getLoanByIndex(_index);
+        return _getStore().getLoanByIndex(_index);
     }
     
     function updateExpenditure(
@@ -142,7 +151,7 @@ contract UserContract is Pausable {
     ) 
     whenNotPaused canWrite public 
     {
-        store.updateExpenditure(
+        _getStore().updateExpenditure(
             _loan_tag,
             _expend_tag,
             _order_number, 
@@ -175,7 +184,7 @@ contract UserContract is Pausable {
         uint      // 利息
     ) 
     {
-       return store.getExpendByIndex(_loan_index, _expend_index);
+       return _getStore().getExpendByIndex(_loan_index, _expend_index);
     }
     
     function updateInstallment(
@@ -188,7 +197,7 @@ contract UserContract is Pausable {
     ) 
     whenNotPaused canWrite public 
     {
-        store.updateInstallment(
+        _getStore().updateInstallment(
             _loan_tag,
             _expend_tag,
             _installment_tag, 
@@ -211,7 +220,7 @@ contract UserContract is Pausable {
         uint     // 还款金额
     ) 
     {
-        return store.getInstallmentByIndex(_loan_index, _expend_index, _installment_index);
+        return _getStore().getInstallmentByIndex(_loan_index, _expend_index, _installment_index);
     }
     
     function updateRepayment(
@@ -226,7 +235,7 @@ contract UserContract is Pausable {
     ) 
     whenNotPaused canWrite public 
     {
-        store.updateRepayment(
+        _getStore().updateRepayment(
             _loan_tag,
             _expend_tag,
             _repayment_tag,
@@ -253,7 +262,7 @@ contract UserContract is Pausable {
         uint     // 还款时间
     ) 
     {
-        return store.getRepaymentByIndex(_loan_index, _expend_index, _repayment_index);
+        return _getStore().getRepaymentByIndex(_loan_index, _expend_index, _repayment_index);
     }
 }
 
