@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'btc_cacheserver.contract',
+    'channels'
 ]
 
 MIDDLEWARE = [
@@ -182,3 +183,11 @@ LOGGING = {
 }
 }
 
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "asgiref.inmemory.ChannelLayer",
+        "ROUTING": "btc_cacheserver.blockchain.routing.channel_routing",
+    },
+}
+
+INTERFACE_ABI_FILE = "../sol/Interface-abi.json"
