@@ -1,6 +1,7 @@
 import sys
 import json
 from web3 import Web3, RPCProvider
+from channels import Group
 from btc_cacheserver import settings
 from btc_cacheserver.blockchain.decode_contract import decode_input
 
@@ -16,6 +17,7 @@ new_transaction_filter = w3.eth.filter('pending')
 
 def ws_connect(message):
     message.reply_channel.send({"accept": True})
+    Group("chain").add(message.reply_channel)
     def new_block_callback(block_hash):
         block_info = w3.eth.getBlock(block_hash)
         data = {"blockchain": {
@@ -28,7 +30,7 @@ def ws_connect(message):
         json_data = json.dumps(data)
         sys.stdout.write("New Block: {0}\r\n".format(json_data))
         sys.stdout.flush()
-        message.reply_channel.send({"text": json_data})
+        Group("chain").send({"text": json_data})
 
     def new_transaction_callback(tx_hash):
         tx_info = w3.eth.getTransaction(tx_hash)
@@ -48,11 +50,13 @@ def ws_connect(message):
         json_data = json.dumps(data)
         sys.stdout.write("New TX: {0}".format(json_data))
         sys.stdout.flush()
-        message.reply_channel.send({"text": json_data})
+        Group("chain").send({"text": json_data})
 
-    new_block_filter.watch(new_block_callback)
-    new_transaction_filter.watch(new_transaction_callback)
+    if not new_block_filter.running:
+        new_block_filter.watch(new_block_callback)
+    if not new_transaction_filter.running:
+        new_transaction_filter.watch(new_transaction_callback)
 
 def ws_disconnect(message):
-    new_block_filter.stop_watching()
+    Group("chain").discard(message.reply_channel)
 
