@@ -9,6 +9,12 @@ METHOD_TYPE_MAP = {"getLoanByIndex":1, "updateLoan":2,
                    "getExpendByIndex":1, "updateExpenditure":2,
                    "getInstallmentByIndex":1, "updateInstallment":2,
                    "getRepaymentByIndex":1, "updateRepayment":2 }
+
+METHOD_SHOW_MAP = {"none":u"", "getLoanByIndex":u"借款", "updateLoan":u"借款",
+                   "getExpendByIndex":u"支用", "updateExpenditure":u"支用",
+                   "getInstallmentByIndex":u"分期", "updateInstallment":u"分期",
+                   "getRepaymentByIndex":u"还款", "updateRepayment":u"还款" }
+
 TYPE_SHOW_MAP = {0:u"转账", 1:u"查询", 2:u"写入"}
 
 provider = RPCProvider(host=settings.BLOCKCHAIN_RPC_HOST, port=settings.BLOCKCHAIN_RPC_PORT)
@@ -49,6 +55,7 @@ def ws_connect(message):
                 tx_info = w3.eth.getTransaction(th)
                 if tx_info['input']=="0x":
                     tx_type = 0
+                    method_name = 'none'
                 else:
                     method_name, args = decode_input(tx_info['input'])
                     tx_type = METHOD_TYPE_MAP[method_name]
@@ -58,6 +65,8 @@ def ws_connect(message):
                         "to": tx_info['to'],
                         "type": TYPE_SHOW_MAP[tx_type],
                         "fee": tx_info['gas']*tx_info['gasPrice'],
+                        "info": METHOD_SHOW_MAP[method_name],
+                        "time": block.timestamp
                 }
                 data_list.append(data)
                 if len(data_list) > 9:
