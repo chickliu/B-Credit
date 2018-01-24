@@ -65,6 +65,7 @@ class InterfaceMethods(LoanMethods):
     SET_ROUTER             = "setRouter"
     SET_CONTROLLER         = "setController"
     GET_CONTROLLER_ADDRESS = "getControllerAddress"
+    GET_USER_ADDRESS       = "getUserContractAddress"
 
 
 class StoreMethods(ContractMethodsBase):

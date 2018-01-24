@@ -110,6 +110,18 @@ contract Interface is Pausable {
         return UserController(user_controller_address);
     }
     
+    function getUserContractAddress(
+        string _controller_name,
+        bytes32 _user_tag
+    )
+    whenNotPaused canCall public view
+    returns (
+        address
+    )
+    {
+        return _getUserController(_controller_name).getUserContractAddress(_user_tag);
+    }
+    
     function getLoanTimes(
         string _controller_name,
         bytes32 _user_tag

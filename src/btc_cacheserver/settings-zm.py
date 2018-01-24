@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """
 Django settings for btc_cacheserver project.
 
@@ -128,9 +131,12 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
+        'procedure': {
+            'format': '[%(asctime)s] [%(threadName)s:%(thread)d] [%(name)s] %(message)s', 
+        }, #日志格式
         'django':{
             'format': '[%(asctime)s] [%(threadName)s:%(thread)d] [%(name)s] [%(pathname)s:%(lineno)s] [%(funcName)s] [%(levelname)s]-%(message)s', 'datefmt': '%Y-%m-%d %H:%M:%S',
-            },
+        },
     },
     'filters': {
 
@@ -146,6 +152,15 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'django'
         },
+        'procedure': {
+            'level':'DEBUG',
+            # 'class':'cloghandler.ConcurrentRotatingFileHandler',
+            # 'filename':'/data/logs/app_bsmserver.log',
+            # 'maxBytes': 1024*1024*50,
+            # 'backupCount': 5,
+            'class': 'logging.StreamHandler',
+            'formatter':'procedure',
+        }
     },
     'loggers': {
         'django': {
@@ -167,31 +182,88 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'ERROR',
             'propagate': False
-        }
+        },
+        'procedure': {
+            'handlers': ['procedure',  ],
+            'level': 'INFO',
+            'propagate': False
+        },
     }
 }
 
 # MQ_CONFIG
-MQ_HOST = "10.2.0.150"
-MQ_PORT = 5672
-MQ_USER = "admin"
+MQ_HOST     = "10.2.0.150"
+MQ_PORT     = 5672
+MQ_USER     = "admin"
 MQ_PASSWORD = "admin"
-WRITE_BLOCKCHAIN_QUEUE = "write_blockchain_queue"
+
+WRITE_BLOCKCHAIN_QUEUE    = "write_blockchain_queue"
 WRITE_BLOCKCHAIN_EXCHANGE = "write_blockchain_exchange"
 
-BLOCKCHAIN_ACCOUNT = "0x3b2BD2ad09FC693119736b6E038Cd2343B9F8D2a"
-BLOCKCHAIN_PASSWORD = "123456"
-BLOCKCHAIN_RPC_HOST = "10.0.0.28"
-BLOCKCHAIN_RPC_PORT = "8020"
-BLOCKCHAIN_CALL_GAS_LIMIT = 4000000
-TRANSACTION_MAX_WAIT = 60
+BLOCKCHAIN_ACCOUNT        = "0x3b2BD2ad09FC693119736b6E038Cd2343B9F8D2a"
+BLOCKCHAIN_PASSWORD       = "123456"
+BLOCKCHAIN_RPC_HOST       = "10.0.0.29"
+BLOCKCHAIN_RPC_PORT       = "8020"
+BLOCKCHAIN_CALL_GAS_LIMIT = 4500000
+TRANSACTION_MAX_WAIT      = 60
 
-#CONTRACT_ADDRESS = "0x57509903802077a1b0E3f2bb86de48E31180bAcA"
-#CONTRACT_ADDRESS = "0x6885e231fA0a7cBa99823360b4Ebcf1725ECB18E"
-#CONTRACT_ADDRESS = "0xb2Cd6758468B83EA7Ab4741Be4EF5E4B6a702790"
-#CONTRACT_ADDRESS = "0xe44A9f7Cd6B3E666058b5579bCA997d7612187CF"
-CONTRACT_ADDRESS = "0x7a54661841B05D65035185832dcd649727aD219a"
-CONTRACT_ABI_FILE = "./test-map-contract-abi.json"
-USER_CONTRACT_ABI_FILE = "./test-user-contract-abi.json"
+# CONTROLLER_ROUTE_ADDRESS = "0xc13aEc0e45032c191e0C055BBF4ad67e066237A3"
+CONTROLLER_ROUTE_ADDRESS = "0x2270B8e204eAc6B9013bb62093B105d719be8a35"
+# DATA_STORE_ROUTE_ADDRESS = "0x63C48C36d69d7b580784de56C77718A778990B3d"
+DATA_STORE_ROUTE_ADDRESS = "0x1D0CAD1044e92AadA0d3f1fF10eaE2CC6a544c48"
+# INTERFACE_ADDRESS        = "0x40c3bA573fE3D01EfD010B7989EEe354a3240151"
+# INTERFACE_ADDRESS        = "0x91CD23399851376F6a8d3938D7f55a3e79003C69"
+INTERFACE_ADDRESS        = "0xa35E196B77158B6627e4803A3C50223a7584d00C"
+
+
+CONTRACT_DIR = os.path.join(BASE_DIR, "sol")
+
+from .defines import ContractNames
+
+
+def _get_sol_path(contract_name):
+    return os.path.join(CONTRACT_DIR, "%s.sol" % contract_name)
+
+BASE_SOL_ROLES = _get_sol_path(ContractNames.ROLES)
+BASE_SOL_RBAC = _get_sol_path(ContractNames.RBAC)
+BASE_SOL_PAUSABLE = _get_sol_path(ContractNames.PAUSABLE)
+
+
+CONTRACT_BASE_SOLS = {
+    ContractNames.CONTROLLER_ROUTE: [
+        BASE_SOL_ROLES, BASE_SOL_RBAC, BASE_SOL_PAUSABLE, 
+    ],
+    ContractNames.DATA_STORE_ROUTE: [
+        BASE_SOL_ROLES, BASE_SOL_RBAC, BASE_SOL_PAUSABLE, 
+    ],
+    ContractNames.INTERFACE: [
+        BASE_SOL_ROLES, BASE_SOL_RBAC, BASE_SOL_PAUSABLE, 
+        _get_sol_path(ContractNames.CONTROLLER_ROUTE), 
+        _get_sol_path(ContractNames.USER_CONTROLLER), 
+    ],
+    ContractNames.USER_CONTROLLER: [
+        BASE_SOL_ROLES, BASE_SOL_RBAC, BASE_SOL_PAUSABLE,
+        _get_sol_path(ContractNames.DATA_STORE_ROUTE),
+        _get_sol_path(ContractNames.USER_CONTRACT_STORE),
+        _get_sol_path(ContractNames.USER_CONTRACT),
+    ],
+    ContractNames.USER_CONTRACT_STORE: [
+        BASE_SOL_ROLES, BASE_SOL_RBAC, BASE_SOL_PAUSABLE,
+    ],
+    ContractNames.USER_CONTRACT: [
+        BASE_SOL_ROLES, BASE_SOL_RBAC, BASE_SOL_PAUSABLE,
+        _get_sol_path(ContractNames.DATA_STORE_ROUTE),
+        _get_sol_path(ContractNames.LOAN_DATA_STORE),
+    ],
+    ContractNames.LOAN_DATA_STORE: [
+        BASE_SOL_ROLES, BASE_SOL_RBAC, BASE_SOL_PAUSABLE,
+    ],
+}
+
+def get_base_sols(contract_name):
+    return CONTRACT_BASE_SOLS.get(contract_name, [])
+
+def get_abi_path(contract_name):
+    return os.path.join(CONTRACT_DIR, "%s-abi.json" % contract_name)
 
 django.setup()

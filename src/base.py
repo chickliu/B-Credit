@@ -13,10 +13,10 @@ import time
 
 
 from web3 import Web3, RPCProvider
-from web3.contract import ConciseContract
 from solc import compile_files
 
 from btc_cacheserver import settings
+from btc_cacheserver.defines import StoreMethods
 
 contract_instances = {}
 
@@ -114,4 +114,17 @@ def pure_get_exec(_ins, method, *args, **kwargs):
     method_call = getattr(_ins, method)
     return method_call(*args, **kwargs)
 
+def role_added_from_contract_ins(role_dest_address, dest_contract, role=StoreMethods.ROLE_WRITER):
+    return transaction_exec_v2(dest_contract, StoreMethods.ADMIN_ADD_ROLE,  role_dest_address, role)
+
+def role_added(role_dest_address, dest_contract_name, dest_contract_address, role=StoreMethods.ROLE_WRITER):
+    _contract = get_contract_instance(dest_contract_address, settings.get_abi_path(dest_contract_name))
+    return role_added_from_contract_ins(role_dest_address, _contract, role)
+
+def role_removed_from_contract_ins(role_dest_address, dest_contract, role=StoreMethods.ROLE_WRITER):
+    return transaction_exec_v2(dest_contract, StoreMethods.ADMIN_REMOVE_ROLE,  role_dest_address, role)
+
+def role_removed(role_dest_address, dest_contract_name, dest_contract_address, role=StoreMethods.ROLE_WRITER):
+    _contract = get_contract_instance(dest_contract_address, settings.get_abi_path(dest_contract_name))
+    return role_removed_from_contract_ins(role_dest_address, _contract, role)
 

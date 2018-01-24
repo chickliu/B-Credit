@@ -90,9 +90,8 @@ def _deploy_user_controller():
 def create_user_controller(controller_name):
 
     interface = base.get_contract_instance(settings.INTERFACE_ADDRESS, settings.get_abi_path(ContractNames.INTERFACE))
-    try:
-        user_controller_address = base.transaction_exec_result(interface, InterfaceMethods.GET_CONTROLLER_ADDRESS, controller_name)
-    except exceptions.BadFunctionCallOutput:
+    user_controller_address = base.transaction_exec_result(interface, InterfaceMethods.GET_CONTROLLER_ADDRESS, controller_name)
+    if not int(user_controller_address, 16):
         traceback.print_exc()
         user_controller_address = _deploy_user_controller()
 
@@ -100,7 +99,7 @@ def create_user_controller(controller_name):
         base.transaction_exec_v2(controller_route, StoreMethods.ADMIN_ADD_ROLE, settings.INTERFACE_ADDRESS, StoreMethods.ROLE_WRITER)
         base.transaction_exec_v2(controller_route, StoreMethods.ADMIN_ADD_ROLE, settings.INTERFACE_ADDRESS, StoreMethods.ROLE_CALLER)
 
-        base.transaction_exec_v2(interface, StoreMethods.SET_CONTROLLER, ContractNames.USER_CONTROLLER, user_controller_address)
+        base.transaction_exec_v2(interface, InterfaceMethods.SET_CONTROLLER, ContractNames.USER_CONTROLLER, user_controller_address)
 
     print(user_controller_address)
 

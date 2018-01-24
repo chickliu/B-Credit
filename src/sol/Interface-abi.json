@@ -214,6 +214,29 @@
     "constant": true,
     "inputs": [
       {
+        "name": "_controller_name",
+        "type": "string"
+      },
+      {
+        "name": "_user_tag",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getUserContractAddress",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
         "name": "addr",
         "type": "address"
       },
