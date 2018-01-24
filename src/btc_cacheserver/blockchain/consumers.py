@@ -19,35 +19,53 @@ def ws_connect(message):
     message.reply_channel.send({"accept": True})
     Group("chain").add(message.reply_channel)
     def new_block_callback(block_hash):
-        block_info = w3.eth.getBlock(block_hash)
-        data = {"blockchain": {
+        data_list = []
+        block_num = w3.eth.getBlock(block_hash).number
+        for i in range(10):
+            block_info = w3.eth.getBlock(block_num - i)
+            data = {
                     "blocknumber": block_info['number'],
                     "miner": block_info['miner'],
                     "time": block_info['timestamp'],
                     "tx_count": len(block_info['transactions'])
-                    }
-               }
-        json_data = json.dumps(data)
-        sys.stdout.write("New Block: {0}\r\n".format(json_data))
-        sys.stdout.flush()
+            }
+            data_list.append(data)
+        datas = {"blockchain":data_list}
+        json_data = json.dumps(datas)
+        #sys.stdout.write("New Block: {0}\r\n".format(json_data))
+        #sys.stdout.flush()
         Group("chain").send({"text": json_data})
 
     def new_transaction_callback(tx_hash):
-        tx_info = w3.eth.getTransaction(tx_hash)
-        if tx_info['input']=="0x":
-            tx_type = 0
-        else:
-            method_name, args = decode_input(tx_info['input'])
-            tx_type = METHOD_TYPE_MAP[method_name]
-        data = {"transactions": {
-                    "tx_hash": tx_hash,
-                    "from": tx_info['from'],
-                    "to": tx_info['to'],
-                    "type": tx_type,
-                    "fee": tx_info['gas']*tx_info['gasPrice'],
-                    }
-               }
-        json_data = json.dumps(data)
+        data_list = []
+        #block_num = w3.eth.getTransaction(tx_hash).blockNumber
+        block_num = w3.eth.blockNumber
+        for i in range(100):
+            block = w3.eth.getBlock(block_num - i)
+            bt_list = block.transactions
+            bt_list.reverse()
+            for th in bt_list:
+                tx_info = w3.eth.getTransaction(th)
+                if tx_info['input']=="0x":
+                    tx_type = 0
+                else:
+                    method_name, args = decode_input(tx_info['input'])
+                    tx_type = METHOD_TYPE_MAP[method_name]
+                data = {
+                        "tx_hash": th,
+                        "from": tx_info['from'],
+                        "to": tx_info['to'],
+                        "type": tx_type,
+                        "fee": tx_info['gas']*tx_info['gasPrice'],
+                }
+                data_list.append(data)
+                if len(data_list) > 9:
+                    break
+            else:
+                continue
+            break
+        datas = {"transactions":data_list}
+        json_data = json.dumps(datas)
         sys.stdout.write("New TX: {0}".format(json_data))
         sys.stdout.flush()
         Group("chain").send({"text": json_data})

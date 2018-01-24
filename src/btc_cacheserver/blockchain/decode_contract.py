@@ -27,9 +27,6 @@ def decode_contract_call(contract_abi: list, call_data: str):
 
 
 def decode_input(str_input):
-    with open(settings.INTERFACE_ABI_FILE, "r") as fo:
-        compiled_sol = json.loads(fo.read())
-    contract_interface = compiled_sol['<stdin>:UserMapsContract']
-    method_name, args = decode_contract_call(contract_interface['abi'], str_input)
+    method_name, args = decode_contract_call(settings.INTERFACE_ABI_FILE, str_input)
     return method_name, args
 
