@@ -27,6 +27,9 @@ def decode_contract_call(contract_abi: list, call_data: str):
 
 
 def decode_input(str_input):
-    method_name, args = decode_contract_call(settings.INTERFACE_ABI_FILE, str_input)
+    if str_input[0:2]=="0x":
+        str_input = str_input[2:]
+    with open(settings.INTERFACE_ABI_FILE, 'r') as abi_file:
+        dict_abi = json.load(abi_file)
+    method_name, args = decode_contract_call(dict_abi, str_input)
     return method_name, args
-

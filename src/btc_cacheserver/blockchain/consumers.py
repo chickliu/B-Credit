@@ -9,6 +9,7 @@ METHOD_TYPE_MAP = {"getLoanByIndex":1, "updateLoan":2,
                    "getExpendByIndex":1, "updateExpenditure":2,
                    "getInstallmentByIndex":1, "updateInstallment":2,
                    "getRepaymentByIndex":1, "updateRepayment":2 }
+TYPE_SHOW_MAP = {0:u"转账", 1:u"查询", 2:u"写入"}
 
 provider = RPCProvider(host=settings.BLOCKCHAIN_RPC_HOST, port=settings.BLOCKCHAIN_RPC_PORT)
 w3 = Web3(provider)
@@ -55,7 +56,7 @@ def ws_connect(message):
                         "tx_hash": th,
                         "from": tx_info['from'],
                         "to": tx_info['to'],
-                        "type": tx_type,
+                        "type": TYPE_SHOW_MAP[tx_type],
                         "fee": tx_info['gas']*tx_info['gasPrice'],
                 }
                 data_list.append(data)
@@ -66,8 +67,8 @@ def ws_connect(message):
             break
         datas = {"transactions":data_list}
         json_data = json.dumps(datas)
-        sys.stdout.write("New TX: {0}".format(json_data))
-        sys.stdout.flush()
+        #sys.stdout.write("New TX: {0}".format(json_data))
+        #sys.stdout.flush()
         Group("chain").send({"text": json_data})
 
     if not new_block_filter.running:
