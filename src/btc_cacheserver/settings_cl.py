@@ -190,4 +190,6 @@ CHANNEL_LAYERS = {
     },
 }
 
-INTERFACE_ABI_FILE = "../sol/Interface-abi.json"
+INTERFACE_ABI_FILE = BASE_DIR + "/sol/Interface-abi.json"
+INTERFACE_SOL_FILE = BASE_DIR + "/sol/Interface.sol"
+USER_CONTRACT_ABI_FILE = "./test-user-contract-abi.json"
