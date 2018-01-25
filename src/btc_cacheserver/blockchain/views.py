@@ -127,7 +127,7 @@ def get_blocknumber_recording(request):
             block_recording = BlockNumberRecording.objects.all()
 
         number_list = [block.blocknumber for block in block_recording]
-        time_list = [block.time for block in block_recording]
+        time_list = [block.time.strftime("%Y-%m-%d %H:%M:%S") for block in block_recording]
 
         data = {
             "msg": "",
