@@ -20,6 +20,7 @@ from django.db.utils import OperationalError
 import base
 from btc_cacheserver import settings
 from btc_cacheserver.defines import WriteChainMsgTypes, ContractNames, UserContractMethods, StoreMethods, InterfaceMethods
+from btc_cacheserver.util.procedure_logging import Procedure
 from btc_cacheserver.contract.models import TransactionInfo, User, PlatFormInfo, LoanInformation, RepaymentInfo, InstallmentInfo
 from deploy import deploy
 
@@ -65,7 +66,8 @@ def _deploy_user_contract(user_tag_str):
 
     return user_contract_address
 
-def _deploy_user_controller():
+def _deploy_user_controller(user_contract_store_address=None):
+    procedure = Procedure("<UserController>")
     user_controller_address = deploy(
         ContractNames.USER_CONTROLLER,
         [settings.DATA_STORE_ROUTE_ADDRESS, ],
@@ -75,11 +77,13 @@ def _deploy_user_controller():
     base.transaction_exec_v2(data_store_route, StoreMethods.ADMIN_ADD_ROLE, user_controller_address, StoreMethods.ROLE_WRITER)
     base.transaction_exec_v2(data_store_route, StoreMethods.ADMIN_ADD_ROLE, user_controller_address, StoreMethods.ROLE_CALLER)
 
-    user_contract_store_address = deploy(
-        ContractNames.USER_CONTRACT_STORE,
-        [],
-    )
-    base.transaction_exec_v2(data_store_route, StoreMethods.SET_ADDRESS, user_controller_address, user_contract_store_address, True)
+    if user_contract_store_address is None:
+        user_contract_store_address = deploy(
+            ContractNames.USER_CONTRACT_STORE,
+            [],
+        )
+    _version = base.transaction_exec_result(data_store_route, StoreMethods.SET_ADDRESS, user_controller_address, user_contract_store_address, True)
+    procedure.info("%s store address is %s, version is %s" % (user_controller_address, user_contract_store_address, _version))
 
     user_contract_store = base.get_contract_instance(user_contract_store_address, settings.get_abi_path(ContractNames.USER_CONTRACT_STORE))
     base.transaction_exec_v2(user_contract_store, StoreMethods.ADMIN_ADD_ROLE, user_controller_address, StoreMethods.ROLE_WRITER)
@@ -88,18 +92,18 @@ def _deploy_user_controller():
     return user_controller_address
 
 def create_user_controller(controller_name):
-
+    procedure = Procedure("<%s>" % controller_name)
     interface = base.get_contract_instance(settings.INTERFACE_ADDRESS, settings.get_abi_path(ContractNames.INTERFACE))
     user_controller_address = base.transaction_exec_result(interface, InterfaceMethods.GET_CONTROLLER_ADDRESS, controller_name)
     if not int(user_controller_address, 16):
-        traceback.print_exc()
         user_controller_address = _deploy_user_controller()
 
         controller_route = base.get_contract_instance(settings.CONTROLLER_ROUTE_ADDRESS, settings.get_abi_path(ContractNames.CONTROLLER_ROUTE))
         base.transaction_exec_v2(controller_route, StoreMethods.ADMIN_ADD_ROLE, settings.INTERFACE_ADDRESS, StoreMethods.ROLE_WRITER)
         base.transaction_exec_v2(controller_route, StoreMethods.ADMIN_ADD_ROLE, settings.INTERFACE_ADDRESS, StoreMethods.ROLE_CALLER)
 
-        base.transaction_exec_v2(interface, InterfaceMethods.SET_CONTROLLER, ContractNames.USER_CONTROLLER, user_controller_address)
+        _version = base.transaction_exec_result(interface, InterfaceMethods.SET_CONTROLLER_ADDRESS, ContractNames.USER_CONTROLLER, user_controller_address)
+        procedure.info("%s(%s) version is %s", ContractNames.USER_CONTROLLER, user_controller_address, _version)
 
     print(user_controller_address)
 

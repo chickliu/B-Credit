@@ -3,11 +3,11 @@
     "constant": false,
     "inputs": [
       {
-        "name": "contract_name",
+        "name": "_controller_name",
         "type": "string"
       },
       {
-        "name": "version",
+        "name": "_version",
         "type": "uint32"
       }
     ],
@@ -53,11 +53,11 @@
     "constant": false,
     "inputs": [
       {
-        "name": "contract_name",
+        "name": "_controller_name",
         "type": "string"
       },
       {
-        "name": "contract_address",
+        "name": "_controller_address",
         "type": "address"
       },
       {
@@ -66,7 +66,12 @@
       }
     ],
     "name": "setAddress",
-    "outputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint32"
+      }
+    ],
     "payable": false,
     "stateMutability": "nonpayable",
     "type": "function"
@@ -299,7 +304,7 @@
       },
       {
         "indexed": false,
-        "name": "contract_name",
+        "name": "controller_name",
         "type": "string"
       },
       {
@@ -309,11 +314,11 @@
       },
       {
         "indexed": false,
-        "name": "contract_address",
+        "name": "controller_address",
         "type": "address"
       }
     ],
-    "name": "SetContractAddress",
+    "name": "SetControllerAddress",
     "type": "event"
   },
   {
@@ -331,7 +336,7 @@
       },
       {
         "indexed": false,
-        "name": "contract_name",
+        "name": "controller_name",
         "type": "string"
       },
       {
@@ -340,7 +345,7 @@
         "type": "uint32"
       }
     ],
-    "name": "SetContractCurrentVersion",
+    "name": "SetControllerVersion",
     "type": "event"
   },
   {

@@ -1,5 +1,24 @@
 [
   {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_controller_name",
+        "type": "string"
+      }
+    ],
+    "name": "getControllerVersion",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint32"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "constant": false,
     "inputs": [
       {
@@ -222,11 +241,34 @@
         "type": "bytes32"
       }
     ],
-    "name": "getUserContractAddress",
+    "name": "getLoanContractAddress",
     "outputs": [
       {
         "name": "",
         "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_controller_name",
+        "type": "string"
+      },
+      {
+        "name": "_user_tag",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getLoanContractVersion",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint32"
       }
     ],
     "payable": false,
@@ -250,6 +292,52 @@
       {
         "name": "",
         "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_controller_name",
+        "type": "string"
+      },
+      {
+        "name": "_user_tag",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getUserLoanStoreRouteAddress",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_controller_name",
+        "type": "string"
+      },
+      {
+        "name": "_user_tag",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getUserLoanStoreAddress",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
       }
     ],
     "payable": false,
@@ -451,6 +539,20 @@
   },
   {
     "constant": false,
+    "inputs": [
+      {
+        "name": "_controller_route_address",
+        "type": "address"
+      }
+    ],
+    "name": "setControllerRoute",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
     "inputs": [],
     "name": "pause",
     "outputs": [],
@@ -517,24 +619,6 @@
     "constant": false,
     "inputs": [
       {
-        "name": "_controller_name",
-        "type": "string"
-      },
-      {
-        "name": "_contorller_address",
-        "type": "address"
-      }
-    ],
-    "name": "setController",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
         "name": "addr",
         "type": "address"
       },
@@ -566,6 +650,29 @@
       {
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_controller_name",
+        "type": "string"
+      },
+      {
+        "name": "_user_tag",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getUserLoanStoreVersion",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint32"
       }
     ],
     "payable": false,
@@ -621,17 +728,36 @@
     "type": "function"
   },
   {
-    "constant": false,
-    "inputs": [
+    "constant": true,
+    "inputs": [],
+    "name": "getControllerRouteAddress",
+    "outputs": [
       {
-        "name": "_controller_route_address",
+        "name": "",
         "type": "address"
       }
     ],
-    "name": "setRouter",
-    "outputs": [],
     "payable": false,
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_controller_name",
+        "type": "string"
+      }
+    ],
+    "name": "getLoanContractRouteAddress",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -724,34 +850,7 @@
       },
       {
         "indexed": false,
-        "name": "controller_name",
-        "type": "string"
-      },
-      {
-        "indexed": false,
-        "name": "controller_address",
-        "type": "address"
-      }
-    ],
-    "name": "InterfaceSetController",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "origin",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "caller",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "tx_hash",
+        "name": "block_number",
         "type": "uint256"
       },
       {

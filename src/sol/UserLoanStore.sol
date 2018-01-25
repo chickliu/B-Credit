@@ -2,7 +2,7 @@ pragma solidity ^0.4.18;
 
 import {Pausable} from "./Pausable.sol";
 
-contract LoanDataStore is Pausable {
+contract UserLoanStore is Pausable {
 
     uint32 private loanCounter; // 借贷次数
     uint private latestUpdate;  // 最新的blockNumber, 用以指示最后的更改
@@ -12,7 +12,7 @@ contract LoanDataStore is Pausable {
     event WriteData(
         address origin,
         address caller,
-        uint256 tx_hash,
+        uint256 block_number,
         string types
     );
     
@@ -73,7 +73,7 @@ contract LoanDataStore is Pausable {
     mapping(uint32 => loan) loans;         // 借贷记录, loanCounter和loan的映射关系
     mapping(bytes32 => uint32) loansIndex; // loanTag和loanCounter的映射关系
     
-    function LoanDataStore(
+    function UserLoanStore(
         bytes32 _user_tag
     ) 
     public 
@@ -89,7 +89,7 @@ contract LoanDataStore is Pausable {
         bytes32
     )
     {
-        return "LoanDataStore";
+        return "UserLoanStore";
     }
     
     function getUserTag(
