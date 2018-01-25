@@ -2,7 +2,7 @@ pragma solidity ^0.4.18;
 
 import {Pausable} from "./Pausable.sol";
 
-contract DataStoreRoute is Pausable {
+contract UserLoanStoreRoute is Pausable {
 
     // contract_address => version => data_store_address
     mapping(address => mapping(uint32 => address)) store;
@@ -13,14 +13,14 @@ contract DataStoreRoute is Pausable {
     // contract_address => max_version
     mapping(address => uint32) maxVersionStore;
     
-    event SetDataStoreAddress(
+    event SetLoanStoreAddress(
         address origin, 
         address caller, 
         address data_owner, 
         uint32 version, 
         address data_address
     );
-    event SetDataStoreCurrentVersion(
+    event SetLoanStoreCurrentVersion(
         address origin, 
         address caller, 
         address data_owner, 
@@ -35,7 +35,7 @@ contract DataStoreRoute is Pausable {
         bytes32
     )
     {
-        return "DataStoreRoute";
+        return "UserLoanStoreRoute";
     }
     
     function setCurrentVersion(
@@ -45,7 +45,7 @@ contract DataStoreRoute is Pausable {
     whenNotPaused canWrite public 
     {
         currentVersionStore[data_owner]= version;
-        SetDataStoreCurrentVersion(tx.origin, msg.sender, data_owner, version);
+        SetLoanStoreCurrentVersion(tx.origin, msg.sender, data_owner, version);
     }
     
     function setAddress(
@@ -54,13 +54,16 @@ contract DataStoreRoute is Pausable {
         bool set_current
     ) 
     whenNotPaused canWrite public 
+    returns(
+        uint32
+    )
     {
         
         uint32 assume_version = 0;
         
         // unique the data_address
         uint32 max_version = maxVersionStore[data_owner];
-        for (uint32 i=0; i <= max_version; i++) {
+        for (uint32 i=1; i <= max_version; i++) {
             if(store[data_owner][i] != data_address) continue;
             assume_version = i;
         }
@@ -69,12 +72,14 @@ contract DataStoreRoute is Pausable {
         if(assume_version == 0) {
             assume_version = ++maxVersionStore[data_owner];
             store[data_owner][assume_version] = data_address;
-            SetDataStoreAddress(tx.origin, msg.sender, data_owner, assume_version, data_address);
+            SetLoanStoreAddress(tx.origin, msg.sender, data_owner, assume_version, data_address);
         }
         
         if(set_current) {
             setCurrentVersion(data_owner, assume_version);
         }
+        
+        return assume_version;
     }
     
     function getCurrentVersion(

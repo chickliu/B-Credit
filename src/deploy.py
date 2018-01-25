@@ -8,7 +8,7 @@ from btc_cacheserver.util.procedure_logging import Procedure
 
 def deploy(contract_name, contract_arguments):
     arguments = copy.copy(locals())
-    procedure = Procedure("contract_deploy")
+    procedure = Procedure("<%s>" % contract_name)
     procedure.start(arguments)
     contract_interface = get_compile(contract_name)
     
@@ -40,4 +40,4 @@ if __name__ == "__main__":
         deploy(_name, _args)
     except Exception as e:
         traceback.print_exc()
-        print("usage: python3 deploy.py {contract_name} [{contract_argument1} {contract_argument2}]")
+        print("usage: python3 deploy.py {contract_name} [{contract_argument1} {contract_argument2} ...]")

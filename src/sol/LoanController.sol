@@ -1,40 +1,34 @@
 pragma solidity ^0.4.18;
 
 import {Pausable} from "./Pausable.sol";
-import {DataStoreRoute} from "./DataStoreRoute.sol";
-import {UserContractStore} from "./UserContractStore.sol";
-import {UserContract} from "./UserContract.sol";
+import {LoanContractRoute} from "./LoanContractRoute.sol";
+import {UserLoan} from "./UserLoan.sol";
 
-contract UserController is Pausable {
+contract LoanController is Pausable {
 
-    DataStoreRoute router;
+    LoanContractRoute router;
     
     //event
-    event UserControllerSetRouter(
+    event LoanControllerSetRouter(
         address origin, 
         address caller, 
-        address data_store_route_address
-    );
-    event UserControllerSetStore(
-        address origin, 
-        address caller, 
-        address user_contract_store_address
+        address loan_contract_route_address
     );
     
-    function UserController(
-        address _data_store_route_address
+    function LoanController(
+        address _loan_contract_route_address
     )
     public
     {
-        require(_data_store_route_address != address(0));
+        require(_loan_contract_route_address != address(0));
         
-        router = DataStoreRoute(_data_store_route_address);
+        router = LoanContractRoute(_loan_contract_route_address);
         
         //event
-        UserControllerSetRouter(
+        LoanControllerSetRouter(
             tx.origin,
             msg.sender,
-            _data_store_route_address
+            _loan_contract_route_address
         );
     }
     
@@ -46,51 +40,47 @@ contract UserController is Pausable {
         bytes32
     )
     {
-        return "UserController";
+        return "LoanController";
     }
     
-    function setRouter(
-        address _data_store_route_address
+    function setLoanContractRoute(
+        address _loan_contract_route_address
     ) 
-    whenNotPaused canWrite public 
+    whenNotPaused onlyAdmin public 
     {
-        router = DataStoreRoute(_data_store_route_address);
+        router = LoanContractRoute(_loan_contract_route_address);
         
         //event
-        UserControllerSetRouter(
+        LoanControllerSetRouter(
             tx.origin,
             msg.sender,
-            _data_store_route_address
+            _loan_contract_route_address
         );
     }
     
-    function setStore(
-        address _user_contract_store_address
-    ) 
-    whenNotPaused canWrite public 
-    {
-        router.setAddress(this, _user_contract_store_address, true);
-        
-        //event
-        UserControllerSetStore(
-            tx.origin,
-            msg.sender,
-            _user_contract_store_address
-        );
-    }
-    
-    function _getStore(
+    function getLoanContractRouteAddress(
     
     )
-    whenNotPaused canCall internal view
-    returns (
-        UserContractStore store
+    whenNotPaused canCall public view
+    returns(
+        address
     )
     {
-        store = UserContractStore(router.getCurrentAddress(this));
+        return router;
     }
     
-    function getUserContractAddress(
+    function getLoanContractVersion(
+        bytes32 _user_tag
+    )
+    whenNotPaused canCall public view
+    returns(
+        uint32
+    )
+    {
+        return router.getCurrentVersion(_user_tag);
+    }
+    
+    function getLoanContractAddress(
         bytes32 _user_tag
     )
     whenNotPaused canCall public view
@@ -98,20 +88,53 @@ contract UserController is Pausable {
         address
     )
     {
-        return _getStore().getCurrentAddress(_user_tag);
+        return router.getCurrentAddress(_user_tag);
     }
     
-    function _getUserContract(
+    function _getLoanContract(
         bytes32 _user_tag
     )
     whenNotPaused canCall internal view
     returns (
-        UserContract user_contract
+        UserLoan user_contract
     )
     {
-        address user_contract_address = getUserContractAddress(_user_tag);
-        require(user_contract_address != address(0));
-        return UserContract(user_contract_address);
+        address loan_contract_address = getLoanContractAddress(_user_tag);
+        require(loan_contract_address != address(0));
+        return UserLoan(loan_contract_address);
+    }
+    
+    function getUserLoanStoreRouteAddress(
+        bytes32 _user_tag
+    )
+    whenNotPaused canCall public view
+    returns(
+        address
+    )
+    {
+        return _getLoanContract(_user_tag).getUserLoanStoreRouteAddress();
+    }
+    
+    function getUserLoanStoreVersion(
+        bytes32 _user_tag
+    )
+    whenNotPaused canCall public view
+    returns(
+        uint32
+    )
+    {
+        return _getLoanContract(_user_tag).getUserLoanStoreVersion();
+    }
+    
+    function getUserLoanStoreAddress(
+        bytes32 _user_tag
+    )
+    whenNotPaused canCall public view
+    returns (
+        address
+    )
+    {
+        return _getLoanContract(_user_tag).getUserLoanStoreAddress();
     }
     
     function getLoanTimes(
@@ -122,7 +145,7 @@ contract UserController is Pausable {
         uint32
     ) 
     {
-        return _getUserContract(_user_tag).getLoanTimes();
+        return _getLoanContract(_user_tag).getLoanTimes();
     }
     
     function getLatestUpdate(
@@ -133,7 +156,7 @@ contract UserController is Pausable {
         uint
     ) 
     {
-        return _getUserContract(_user_tag).getLatestUpdate();
+        return _getLoanContract(_user_tag).getLatestUpdate();
     }
     
     function updateLoan(
@@ -144,7 +167,7 @@ contract UserController is Pausable {
     ) 
     whenNotPaused canWrite public 
     {
-        _getUserContract(_user_tag).updateLoan(_loan_tag, _platform, _credit_limit);
+        _getLoanContract(_user_tag).updateLoan(_loan_tag, _platform, _credit_limit);
     }
     
     function getLoanByIndex(
@@ -159,7 +182,7 @@ contract UserController is Pausable {
         uint32   // 授信额度
     ) 
     {
-        return _getUserContract(_user_tag).getLoanByIndex(_index);
+        return _getLoanContract(_user_tag).getLoanByIndex(_index);
     }
     
     function updateExpenditure(
@@ -177,7 +200,7 @@ contract UserController is Pausable {
     ) 
     whenNotPaused canWrite public 
     {
-        _getUserContract(_user_tag).updateExpenditure(
+        _getLoanContract(_user_tag).updateExpenditure(
             _loan_tag,
             _expend_tag,
             _order_number, 
@@ -211,7 +234,7 @@ contract UserController is Pausable {
         uint      // 利息
     ) 
     {
-       return _getUserContract(_user_tag).getExpendByIndex(_loan_index, _expend_index);
+       return _getLoanContract(_user_tag).getExpendByIndex(_loan_index, _expend_index);
     }
     
     function updateInstallment(
@@ -225,7 +248,7 @@ contract UserController is Pausable {
     ) 
     whenNotPaused canWrite public 
     {
-        _getUserContract(_user_tag).updateInstallment(
+        _getLoanContract(_user_tag).updateInstallment(
             _loan_tag,
             _expend_tag,
             _installment_tag, 
@@ -249,7 +272,7 @@ contract UserController is Pausable {
         uint     // 还款金额
     ) 
     {
-        return _getUserContract(_user_tag).getInstallmentByIndex(
+        return _getLoanContract(_user_tag).getInstallmentByIndex(
             _loan_index, 
             _expend_index,
             _installment_index
@@ -269,7 +292,7 @@ contract UserController is Pausable {
     ) 
     whenNotPaused canWrite public 
     {
-        _getUserContract(_user_tag).updateRepayment(
+        _getLoanContract(_user_tag).updateRepayment(
             _loan_tag,
             _expend_tag,
             _repayment_tag,
@@ -297,7 +320,7 @@ contract UserController is Pausable {
         uint     // 还款时间
     ) 
     {
-        return _getUserContract(_user_tag).getRepaymentByIndex(
+        return _getLoanContract(_user_tag).getRepaymentByIndex(
             _loan_index, 
             _expend_index, 
             _repayment_index

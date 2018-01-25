@@ -14,20 +14,6 @@
     "type": "function"
   },
   {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "_user_contract_store_address",
-        "type": "address"
-      }
-    ],
-    "name": "setStore",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "constant": true,
     "inputs": [
       {
@@ -41,6 +27,20 @@
     ],
     "name": "checkRole",
     "outputs": [],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getLoanTimes",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint32"
+      }
+    ],
     "payable": false,
     "stateMutability": "view",
     "type": "function"
@@ -72,10 +72,6 @@
     "constant": true,
     "inputs": [
       {
-        "name": "_user_tag",
-        "type": "bytes32"
-      },
-      {
         "name": "_loan_index",
         "type": "uint32"
       },
@@ -84,15 +80,23 @@
         "type": "uint32"
       },
       {
-        "name": "_installment_index",
+        "name": "_repayment_index",
         "type": "uint32"
       }
     ],
-    "name": "getInstallmentByIndex",
+    "name": "getRepaymentByIndex",
     "outputs": [
       {
         "name": "",
         "type": "bytes32"
+      },
+      {
+        "name": "",
+        "type": "uint32"
+      },
+      {
+        "name": "",
+        "type": "uint32"
       },
       {
         "name": "",
@@ -135,47 +139,17 @@
     "type": "function"
   },
   {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "_user_tag",
-        "type": "bytes32"
-      },
-      {
-        "name": "_index",
-        "type": "uint32"
-      }
-    ],
-    "name": "getLoanByIndex",
-    "outputs": [
-      {
-        "name": "",
-        "type": "bytes32"
-      },
-      {
-        "name": "",
-        "type": "bytes32"
-      },
-      {
-        "name": "",
-        "type": "uint32"
-      },
-      {
-        "name": "",
-        "type": "uint32"
-      }
-    ],
+    "constant": false,
+    "inputs": [],
+    "name": "pause",
+    "outputs": [],
     "payable": false,
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "constant": false,
     "inputs": [
-      {
-        "name": "_user_tag",
-        "type": "bytes32"
-      },
       {
         "name": "_loan_tag",
         "type": "bytes32"
@@ -224,66 +198,6 @@
     "type": "function"
   },
   {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "_user_tag",
-        "type": "bytes32"
-      },
-      {
-        "name": "_loan_index",
-        "type": "uint32"
-      },
-      {
-        "name": "_expend_index",
-        "type": "uint32"
-      },
-      {
-        "name": "_repayment_index",
-        "type": "uint32"
-      }
-    ],
-    "name": "getRepaymentByIndex",
-    "outputs": [
-      {
-        "name": "",
-        "type": "bytes32"
-      },
-      {
-        "name": "",
-        "type": "uint32"
-      },
-      {
-        "name": "",
-        "type": "uint32"
-      },
-      {
-        "name": "",
-        "type": "uint32"
-      },
-      {
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [],
-    "name": "pause",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "constant": false,
     "inputs": [
       {
@@ -305,9 +219,59 @@
     "constant": false,
     "inputs": [
       {
-        "name": "_user_tag",
+        "name": "_loan_tag",
         "type": "bytes32"
       },
+      {
+        "name": "_platform",
+        "type": "bytes32"
+      },
+      {
+        "name": "_credit_limit",
+        "type": "uint32"
+      }
+    ],
+    "name": "updateLoan",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getLatestUpdate",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "addr",
+        "type": "address"
+      },
+      {
+        "name": "roleName",
+        "type": "string"
+      }
+    ],
+    "name": "adminAddRole",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
       {
         "name": "_loan_tag",
         "type": "bytes32"
@@ -317,7 +281,7 @@
         "type": "bytes32"
       },
       {
-        "name": "_repayment_tag",
+        "name": "_installment_tag",
         "type": "bytes32"
       },
       {
@@ -325,23 +289,15 @@
         "type": "uint32"
       },
       {
-        "name": "_overdue_days",
-        "type": "uint32"
-      },
-      {
-        "name": "_repay_types",
-        "type": "uint32"
+        "name": "_repay_time",
+        "type": "uint256"
       },
       {
         "name": "_repay_amount",
         "type": "uint256"
-      },
-      {
-        "name": "_repay_time",
-        "type": "uint256"
       }
     ],
-    "name": "updateRepayment",
+    "name": "updateInstallment",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -349,11 +305,21 @@
   },
   {
     "constant": true,
-    "inputs": [
+    "inputs": [],
+    "name": "getUserTag",
+    "outputs": [
       {
-        "name": "_user_tag",
+        "name": "",
         "type": "bytes32"
-      },
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
       {
         "name": "_loan_index",
         "type": "uint32"
@@ -416,76 +382,6 @@
   },
   {
     "constant": true,
-    "inputs": [
-      {
-        "name": "_user_tag",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getLatestUpdate",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "addr",
-        "type": "address"
-      },
-      {
-        "name": "roleName",
-        "type": "string"
-      }
-    ],
-    "name": "adminAddRole",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "_user_tag",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getLoanTimes",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint32"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "_data_store_route_address",
-        "type": "address"
-      }
-    ],
-    "name": "setRouter",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
     "inputs": [],
     "name": "ROLE_WRITER",
     "outputs": [
@@ -513,12 +409,47 @@
     "type": "function"
   },
   {
-    "constant": false,
+    "constant": true,
     "inputs": [
       {
-        "name": "_user_tag",
+        "name": "_loan_index",
+        "type": "uint32"
+      },
+      {
+        "name": "_expend_index",
+        "type": "uint32"
+      },
+      {
+        "name": "_installment_index",
+        "type": "uint32"
+      }
+    ],
+    "name": "getInstallmentByIndex",
+    "outputs": [
+      {
+        "name": "",
         "type": "bytes32"
       },
+      {
+        "name": "",
+        "type": "uint32"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
       {
         "name": "_loan_tag",
         "type": "bytes32"
@@ -528,7 +459,7 @@
         "type": "bytes32"
       },
       {
-        "name": "_installment_tag",
+        "name": "_repayment_tag",
         "type": "bytes32"
       },
       {
@@ -536,37 +467,26 @@
         "type": "uint32"
       },
       {
-        "name": "_repay_time",
-        "type": "uint256"
+        "name": "_overdue_days",
+        "type": "uint32"
+      },
+      {
+        "name": "_repay_types",
+        "type": "uint32"
       },
       {
         "name": "_repay_amount",
         "type": "uint256"
+      },
+      {
+        "name": "_repay_time",
+        "type": "uint256"
       }
     ],
-    "name": "updateInstallment",
+    "name": "updateRepayment",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "_user_tag",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getUserContractAddress",
-    "outputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -584,36 +504,41 @@
     "type": "function"
   },
   {
-    "constant": false,
+    "constant": true,
     "inputs": [
       {
-        "name": "_user_tag",
-        "type": "bytes32"
-      },
-      {
-        "name": "_loan_tag",
-        "type": "bytes32"
-      },
-      {
-        "name": "_platform",
-        "type": "bytes32"
-      },
-      {
-        "name": "_credit_limit",
+        "name": "_index",
         "type": "uint32"
       }
     ],
-    "name": "updateLoan",
-    "outputs": [],
+    "name": "getLoanByIndex",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32"
+      },
+      {
+        "name": "",
+        "type": "bytes32"
+      },
+      {
+        "name": "",
+        "type": "uint32"
+      },
+      {
+        "name": "",
+        "type": "uint32"
+      }
+    ],
     "payable": false,
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
       {
-        "name": "_data_store_route_address",
-        "type": "address"
+        "name": "_user_tag",
+        "type": "bytes32"
       }
     ],
     "payable": false,
@@ -635,33 +560,16 @@
       },
       {
         "indexed": false,
-        "name": "data_store_route_address",
-        "type": "address"
-      }
-    ],
-    "name": "UserControllerSetRouter",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "origin",
-        "type": "address"
+        "name": "block_number",
+        "type": "uint256"
       },
       {
         "indexed": false,
-        "name": "caller",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "user_contract_store_address",
-        "type": "address"
+        "name": "types",
+        "type": "string"
       }
     ],
-    "name": "UserControllerSetStore",
+    "name": "WriteData",
     "type": "event"
   },
   {

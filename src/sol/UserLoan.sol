@@ -1,31 +1,35 @@
 pragma solidity ^0.4.18;
 
 import {Pausable} from "./Pausable.sol";
-import {DataStoreRoute} from "./DataStoreRoute.sol";
-import {LoanDataStore} from "./LoanDataStore.sol";
+import {UserLoanStoreRoute} from "./UserLoanStoreRoute.sol";
+import {UserLoanStore} from "./UserLoanStore.sol";
 
-contract UserContract is Pausable {
-    bytes32 public userTag;
+contract UserLoan is Pausable {
+    bytes32 private userTag;
     
-    DataStoreRoute router;
+    UserLoanStoreRoute router;
     
-    event UserContractSetRouter(
+    event UserLoanSetRouter(
         address origin, 
         address caller, 
         address data_store_route_address
     );
     
-    function UserContract(
+    /* 
+        init
+        @param _user_tag: 
+    */
+    function UserLoan(
         bytes32 _user_tag, 
         address _data_store_route_address
     ) 
     public
     {
         require(_data_store_route_address != address(0));
-        router = DataStoreRoute(_data_store_route_address);
+        router = UserLoanStoreRoute(_data_store_route_address);
         
         //event
-        UserContractSetRouter(
+        UserLoanSetRouter(
             tx.origin, 
             msg.sender, 
             _data_store_route_address
@@ -43,30 +47,55 @@ contract UserContract is Pausable {
         bytes32
     )
     {
-        return "UserContract";
+        return "UserLoan";
     }
     
-    function setRouter(
+    function setUserLoanStoreRoute(
         address _data_store_route_address
     ) 
-    whenNotPaused canWrite public 
+    whenNotPaused onlyAdmin public 
     {
-        router = DataStoreRoute(_data_store_route_address);
+        router = UserLoanStoreRoute(_data_store_route_address);
         
         //event
-        UserContractSetRouter(
+        UserLoanSetRouter(
             tx.origin, 
             msg.sender, 
             _data_store_route_address
         );
     }
     
-    function setStore(
-        address _user_data_store_address
-    ) 
-    whenNotPaused canWrite public
+    function getUserLoanStoreRouteAddress(
+    
+    )
+    whenNotPaused canCall public view
+    returns(
+        address
+    )
     {
-        router.setAddress(this, _user_data_store_address, true);
+        return router;
+    }
+    
+    function getUserLoanStoreVersion(
+    
+    )
+    whenNotPaused canCall public view
+    returns(
+        uint32
+    )
+    {
+        return router.getCurrentVersion(this);
+    }
+    
+    function getUserLoanStoreAddress(
+        
+    )
+    whenNotPaused canCall public view
+    returns(
+        address
+    )
+    {
+        return router.getCurrentAddress(this);
     }
     
     function getUserTag(
@@ -85,10 +114,10 @@ contract UserContract is Pausable {
     )
     whenNotPaused canCall internal view
     returns (
-        LoanDataStore store
+        UserLoanStore
     )
     {
-        store = LoanDataStore(router.getCurrentAddress(this));
+        return UserLoanStore(router.getCurrentAddress(this));
     }
     
     function getLoanTimes(

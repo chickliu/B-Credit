@@ -16,14 +16,67 @@ from web3 import Web3, RPCProvider
 from solc import compile_files
 
 from btc_cacheserver import settings
-from btc_cacheserver.defines import StoreMethods
+from btc_cacheserver.defines import RouteMethods, ContractNames
 
 contract_instances = {}
 
+
+def get_sol_path(contract_name):
+    return os.path.join(settings.CONTRACT_DIR, "%s.sol" % contract_name)
+
+
+def get_compile_path(contract_name):
+    return os.path.join(settings.CONTRACT_DIR, "%s.json" % contract_name)
+
+
+def get_abi_path(contract_name):
+    return os.path.join(settings.CONTRACT_DIR, "%s-abi.json" % contract_name)
+
+
+BASE_SOL_ROLES = get_sol_path(ContractNames.ROLES)
+BASE_SOL_RBAC = get_sol_path(ContractNames.RBAC)
+BASE_SOL_PAUSABLE = get_sol_path(ContractNames.PAUSABLE)
+
+
+CONTRACT_BASE_SOLS = {
+    ContractNames.CONTROLLER_ROUTE: [
+        BASE_SOL_ROLES, BASE_SOL_RBAC, BASE_SOL_PAUSABLE, 
+    ],
+    ContractNames.INTERFACE: [
+        BASE_SOL_ROLES, BASE_SOL_RBAC, BASE_SOL_PAUSABLE, 
+        get_sol_path(ContractNames.CONTROLLER_ROUTE), 
+        get_sol_path(ContractNames.LOAN_CONTROLLER), 
+    ],
+    ContractNames.LOAN_CONTRACT_ROUTE: [
+        BASE_SOL_ROLES, BASE_SOL_RBAC, BASE_SOL_PAUSABLE,
+    ],
+    ContractNames.LOAN_CONTROLLER: [
+        BASE_SOL_ROLES, BASE_SOL_RBAC, BASE_SOL_PAUSABLE,
+        get_sol_path(ContractNames.LOAN_CONTRACT_ROUTE),
+        get_sol_path(ContractNames.USER_LOAN),
+    ],
+    ContractNames.USER_LOAN_STORE_ROUTE: [
+        BASE_SOL_ROLES, BASE_SOL_RBAC, BASE_SOL_PAUSABLE, 
+    ],
+    ContractNames.USER_LOAN: [
+        BASE_SOL_ROLES, BASE_SOL_RBAC, BASE_SOL_PAUSABLE,
+        get_sol_path(ContractNames.USER_LOAN_STORE_ROUTE),
+        get_sol_path(ContractNames.USER_LOAN_STORE),
+    ],
+    ContractNames.USER_LOAN_STORE: [
+        BASE_SOL_ROLES, BASE_SOL_RBAC, BASE_SOL_PAUSABLE,
+    ],
+}
+
+
+def get_base_sols(contract_name):
+    return CONTRACT_BASE_SOLS.get(contract_name, [])
+
+
 def get_compile(contract_name):
-    contract_sol_file = os.path.join(settings.CONTRACT_DIR, "%s.sol" % contract_name)
-    files = settings.get_base_sols(contract_name) + [contract_sol_file, ]
-    contract_compile_file = os.path.join(settings.CONTRACT_DIR, "%s.json" % contract_name)
+    contract_sol_file = get_sol_path(contract_name)
+    files = get_base_sols(contract_name) + [contract_sol_file, ]
+    contract_compile_file = get_compile_path(contract_name)
     if not os.path.exists(contract_compile_file):
         compiled_sol = compile_files(files)["{c_file}:{name}".format(c_file=contract_sol_file, name=contract_name)]
         with open(contract_compile_file, "w+") as fo:
@@ -36,7 +89,7 @@ def get_compile(contract_name):
     return compiled_sol
 
 def get_abi(contract_name):
-    contract_abi_file = os.path.join(settings.CONTRACT_DIR, "%s-abi.json" % contract_name)
+    contract_abi_file = get_abi_path(contract_name)
     if not os.path.exists(contract_abi_file):
         
         compiled_sol = get_compile(contract_name)
@@ -114,17 +167,17 @@ def pure_get_exec(_ins, method, *args, **kwargs):
     method_call = getattr(_ins, method)
     return method_call(*args, **kwargs)
 
-def role_added_from_contract_ins(role_dest_address, dest_contract, role=StoreMethods.ROLE_WRITER):
-    return transaction_exec_v2(dest_contract, StoreMethods.ADMIN_ADD_ROLE,  role_dest_address, role)
+def role_added_from_contract_ins(role_dest_address, dest_contract, role=RouteMethods.ROLE_WRITER):
+    return transaction_exec_v2(dest_contract, RouteMethods.ADMIN_ADD_ROLE,  role_dest_address, role)
 
-def role_added(role_dest_address, dest_contract_name, dest_contract_address, role=StoreMethods.ROLE_WRITER):
-    _contract = get_contract_instance(dest_contract_address, settings.get_abi_path(dest_contract_name))
+def role_added(role_dest_address, dest_contract_name, dest_contract_address, role=RouteMethods.ROLE_WRITER):
+    _contract = get_contract_instance(dest_contract_address, get_abi_path(dest_contract_name))
     return role_added_from_contract_ins(role_dest_address, _contract, role)
 
-def role_removed_from_contract_ins(role_dest_address, dest_contract, role=StoreMethods.ROLE_WRITER):
-    return transaction_exec_v2(dest_contract, StoreMethods.ADMIN_REMOVE_ROLE,  role_dest_address, role)
+def role_removed_from_contract_ins(role_dest_address, dest_contract, role=RouteMethods.ROLE_WRITER):
+    return transaction_exec_v2(dest_contract, RouteMethods.ADMIN_REMOVE_ROLE,  role_dest_address, role)
 
-def role_removed(role_dest_address, dest_contract_name, dest_contract_address, role=StoreMethods.ROLE_WRITER):
-    _contract = get_contract_instance(dest_contract_address, settings.get_abi_path(dest_contract_name))
+def role_removed(role_dest_address, dest_contract_name, dest_contract_address, role=RouteMethods.ROLE_WRITER):
+    _contract = get_contract_instance(dest_contract_address, get_abi_path(dest_contract_name))
     return role_removed_from_contract_ins(role_dest_address, _contract, role)
 

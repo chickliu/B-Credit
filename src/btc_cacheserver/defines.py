@@ -16,32 +16,46 @@ class WriteChainMsgTypes(object):
 
 
 class ContractNames(object):
-    ROLES               = "Roles"
-    RBAC                = "RBAC"
-    PAUSABLE            = "Pausable"
+    ROLES                 = "Roles"
+    RBAC                  = "RBAC"
+    PAUSABLE              = "Pausable"
 
-    CONTROLLER_ROUTE    = "ControllerRoute"
-    DATA_STORE_ROUTE    = "DataStoreRoute"
-    INTERFACE           = "Interface"
-    USER_CONTROLLER     = "UserController"
-    USER_CONTRACT_STORE = "UserContractStore"
-    USER_CONTRACT       = "UserContract"
-    LOAN_DATA_STORE     = "LoanDataStore"
+    INTERFACE             = "Interface"
+    CONTROLLER_ROUTE      = "ControllerRoute"
+
+    LOAN_CONTROLLER       = "LoanController"
+    LOAN_CONTRACT_ROUTE   = "LoanContractRoute"
+
+    USER_LOAN             = "UserLoan"
+    USER_LOAN_STORE_ROUTE = "UserLoanStoreRoute"
+    USER_LOAN_STORE       = "UserLoanStore"
 
 
-class ContractMethodsBase(object):
+class RoleBase(object):
     ROLE_WRITER       = "writer"
     ROLE_CALLER       = "caller"
+    ROLE_ADMIN        = "admin"
 
-    # "checkRole"
-    # "hasRole"
-    ADMIN_REMOVE_ROLE = "adminRemoveRole"
+    NAME              = "name"
+    CHECK_ROLE        = "checkRole"
+    HAS_ROLE          = "hasRole"
     ADMIN_ADD_ROLE    = "adminAddRole"
+    ADMIN_REMOVE_ROLE = "adminRemoveRole"
     UNPAUSE           = "unpause"
     PAUSE             = "pause"
+    PAUSED            = "paused"
 
 
-class LoanMethods(ContractMethodsBase):
+class RouteMethods(RoleBase):
+    SET_ADDRESS         = "setAddress"
+    SET_CURRENT_VERSION = "setCurrentVersion"
+    GET_MAX_VERSION     = "getMaxVersion"
+    GET_CURRENT_VERSION = "getCurrentVersion"
+    GET_ADDRESS         = "getAddress"
+    GET_CURRENT_ADDRESS = "getCurrentAddress"
+
+
+class LoanMethods(RoleBase):
     GET_LOAN_TIMES           = "getLoanTimes"
     GET_LATEST_UPDATE        = "getLatestUpdate"
     GET_LOAN_BY_INDEX        = "getLoanByIndex"
@@ -55,25 +69,30 @@ class LoanMethods(ContractMethodsBase):
     UPDATE_REPAYMENT         = "updateRepayment"
 
 
-class UserContractMethods(LoanMethods):
-    SET_STORE    = "setStore"
-    SET_ROUTER   = "setRouter"
+class UserLoanMethods(LoanMethods):
+    SET_USER_LOAN_STORE_ROUTE         = "setUserLoanStoreRoute"
 
-    GET_USER_TAG = "getUserTag"
+    GET_USER_LOAN_STORE_ROUTE_ADDRESS = "getUserLoanStoreRouteAddress"
 
-class InterfaceMethods(LoanMethods):
-    SET_ROUTER             = "setRouter"
-    SET_CONTROLLER         = "setController"
+    GET_USER_LOAN_STORE_ADDRESS       = "getUserLoanStoreAddress"
+    GET_USER_LOAN_STORE_VERSION       = "getUserLoanStoreVersion"
+
+
+class LoanControllerMethods(UserLoanMethods):
+    SET_LOAN_CONTRACT_ROUTE = "setLoanContractRoute"
+
+    GET_LOAN_CONTRACT_ROUTE_ADDRESS = "getLoanContractRouteAddress"
+
+    GET_LOAN_CONTRACT_ADDRESS = "getLoanContractAddress"
+    GET_LOAN_CONTRACT_VERSION = "getLoanContractVersion"
+
+
+class InterfaceMethods(LoanControllerMethods):
+    SET_CONTROLLER_ROUTE = "setControllerRoute"
+
+    GET_CONTROLLER_ROUTE_ADDRESS = "getControllerRouteAddress"
+
     GET_CONTROLLER_ADDRESS = "getControllerAddress"
-    GET_USER_ADDRESS       = "getUserContractAddress"
-
-
-class StoreMethods(ContractMethodsBase):
-    SET_ADDRESS         = "setAddress"
-    SET_CURRENT_VERSION = "setCurrentVersion"
-    GET_MAX_VERSION     = "getMaxVersion"
-    GET_CURRENT_VERSION = "getCurrentVersion"
-    GET_ADDRESS         = "getAddress"
-    GET_CURRENT_ADDRESS = "getCurrentAddress"
+    GET_CONTROLLER_VERSION = "getControllerVersion"
 
 

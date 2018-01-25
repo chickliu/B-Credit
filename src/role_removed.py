@@ -21,5 +21,5 @@ if __name__ == '__main__':
         print(tx_receipt)
     except Exception as e:
         traceback.print_exc()
-        print("Usage: python3 role_removed.py {_contract_address_to_add_role} {role_contained_contract_name} {role_contained_contract_address} {role_string}")
+        print("Usage: python3 role_removed.py {_contract_address_to_remove_role} {role_contained_contract_name} {role_contained_contract_address} {role_string}")
 
