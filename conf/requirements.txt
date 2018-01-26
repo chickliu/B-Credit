@@ -1,4 +1,4 @@
-annels==1.1.8
+channels==1.1.8
 Django==2.0.1
 django-cors-headers==2.1.0
 ethereum==2.3.0
