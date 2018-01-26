@@ -140,7 +140,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'procedure': {
-            'format': '[%(asctime)s] [%(threadName)s:%(thread)d] [%(name)s] %(message)s', 
+            'format': '[%(asctime)s] [%(threadName)s:%(thread)d] [%(name)s] %(message)s',
         }, #日志格式
         'django':{
             'format': '[%(asctime)s] [%(threadName)s:%(thread)d] [%(name)s] [%(pathname)s:%(lineno)s] [%(funcName)s] [%(levelname)s]-%(message)s', 'datefmt': '%Y-%m-%d %H:%M:%S',
@@ -242,7 +242,7 @@ INTERFACE_ADDRESS        = "0xcB85ad01F2662c09E1C185C9FD78C34F96F49BE9"
 
 
 CONTRACT_DIR = os.path.join(BASE_DIR, "sol")
-INTERFACE_ABI_FILE = BASE_DIR + "/sol/Interface.json"
+INTERFACE_ABI_FILE = BASE_DIR + "/sol/Interface-abi.json"
 INTERFACE_SOL_FILE = BASE_DIR + "/sol/Interface.sol"
 
 django.setup()
