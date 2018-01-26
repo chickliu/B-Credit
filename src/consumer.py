@@ -189,8 +189,10 @@ def get_loan_contract_address(controller_name, user_tag_str):
 
 def update_data(method, *args):
 
+    procedure = Procedure("<%s>" % method)
     interface = base.get_contract_instance(settings.INTERFACE_ADDRESS, base.get_abi_path(ContractNames.INTERFACE))
     tx = base.transaction_exec_v2(interface, method, *args)
+    procedure.info("UPDATE_DATA tx is: %s", tx.transactionHash)
     if tx.get("cumulativeGasUsed", 0) == settings.BLOCKCHAIN_CALL_GAS_LIMIT:
         raise Exception("gas out limit! transaction failed!")
 
@@ -272,17 +274,22 @@ def on_message(message):
                 data["repay_amount"],
                 int(data["repay_time"])
             )
+        else:
+            procedure.info("UNKOWN_MSG, message is %s", msg_body)
+            message.reject(requeue=False)
+            return
 
+        procedure.info("ACK_MSG, message is %s", msg_body)
         message.ack()
 
     except OperationalError:
-        procedure.exception("WRITE_BLOCK_ERROR, msg is %s", msg_body)
+        procedure.exception("MSG_WRITE_BLOCK_ERROR, message is %s", msg_body)
         connection.close()
         message.reject(requeue=False)
         # message.channel.close()
 
     except Exception as e:
-        procedure.exception("WRITE_BLOCK_ERROR, msg is %s", msg_body)
+        procedure.exception("MSG_WRITE_BLOCK_ERROR, message is %s", msg_body)
         try:
             if WriteChainMsgTypes.MSG_TYPE_EXPEND == _msg_type:
                 update_data(InterfaceMethods.UPDATE_LOAN, 
@@ -325,6 +332,7 @@ def on_message(message):
                     0
                 )
         except Exception:
+            procedure.exception("MSG_WRITE_BLOCK_ERROR, message is %s", msg_body)
             if WriteChainMsgTypes.MSG_TYPE_INSTALLMENT == _msg_type:
                 update_data(InterfaceMethods.UPDATE_LOAN, 
                     ContractNames.LOAN_CONTROLLER,
@@ -371,6 +379,7 @@ def on_message(message):
                     0
                 )
 
+        procedure.info("REJECT_MSG, message is %s", msg_body)
         message.reject(requeue=False)
         # message.channel.close()
 

@@ -11,7 +11,7 @@ class WriteChainMsgTypes(object):
     MSG_TYPE_USER = "user"
     MSG_TYPE_LOAN = "loan"
     MSG_TYPE_EXPEND = "expend"
-    MSG_TYPE_INSTALLMENT = "instalment"
+    MSG_TYPE_INSTALLMENT = "installment"
     MSG_TYPE_REPAYMENT = "repayment"
 
 
