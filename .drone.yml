@@ -1,0 +1,49 @@
+pipeline:
+  clone:
+    image: hub.rongshutong.com/devops/drone-plugin-git
+    depth: 50
+    recursive: true
+
+  publish_branchs:
+    image: plugins/docker
+    username: ${DOCKER_USERNAME}
+    password: ${DOCKER_PASSWORD}
+    registry: hub.rongshutong.com
+    repo: ${REPO}
+    mirror: https://p32x9zi9.mirror.aliyuncs.com
+    tags:
+      - ${DRONE_BRANCH##release/}
+    when:
+      event: push
+      branch: [ release/*, refs/tags/*, master, docker, develop ]
+
+  publish_tags:
+    image: plugins/docker
+    username: ${DOCKER_USERNAME}
+    password: ${DOCKER_PASSWORD}
+    registry: hub.rongshutong.com
+    repo: ${REPO}
+    mirror: https://p32x9zi9.mirror.aliyuncs.com
+    tags:
+      - ${DRONE_TAG}
+    when:
+      event: tag
+      branch: [ release/*, refs/tags/*, master, docker, develop ]
+
+  notify:
+    image: drillster/drone-email
+    host: smtp.mxhichina.com
+    port: 465
+    username: ${EMAIL_USERNAME}
+    password: ${EMAIL_PASSWORD}
+    from: devops@rongshutong.com
+    recipients:
+      - zouyunhua@rongshutong.com
+      - dengshijun@rongshutong.com
+    when:
+      branch: [ release/*, refs/tags/*, master, docker, develop ]
+      status: [ failure, success ]
+
+matrix:
+  include:
+    - REPO: hub.rongshutong.com/saas/btcserver
