@@ -3,7 +3,7 @@
 
 import json
 import logging
-import user
+#import user
 
 import sha3
 
