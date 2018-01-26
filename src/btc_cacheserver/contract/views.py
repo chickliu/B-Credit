@@ -4,6 +4,7 @@
 import json
 import logging
 import sha3
+import web3
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -14,6 +15,7 @@ from django.conf import settings
 from btc_cacheserver.contract.models import User, PlatFormInfo, LoanInformation, RepaymentInfo, InstallmentInfo
 from btc_cacheserver.util import common
 from btc_cacheserver.defines import ContractNames, LoanMethods
+
 
 Log = logging.getLogger("scripts")
 
@@ -214,6 +216,8 @@ def get_user_data(request):
 
     try:
         user_tag = _create_user_tag(username, phone, id_no)
+        user_tag = web3.Web3.toBytes(hexstr=user_tag)
+        Log.info("user tag is {}".format(user_tag))
         contract = common.get_contract_instance(settings.INTERFACE_ADDRESS,
                                                 common.get_abi_path(ContractNames.INTERFACE))
         user_data = {
@@ -222,12 +226,12 @@ def get_user_data(request):
                 "id_no": id_no,
             }
 
-        platform_count = common.pure_get_exec(contract, LoanMethods.GET_LOAN_TIMES,
+        platform_count = common.transaction_exec_local_result(contract, LoanMethods.GET_LOAN_TIMES,
                                               ContractNames.LOAN_CONTROLLER, user_tag)
         list_platform = list()
 
         for loan_index in range(platform_count):
-            loaninfos = common.pure_get_exec(contract, LoanMethods.GET_LOAN_BY_INDEX,
+            loaninfos = common.transaction_exec_local_result(contract, LoanMethods.GET_LOAN_BY_INDEX,
                                              ContractNames.LOAN_CONTROLLER,
                                              user_tag, loan_index)
             dt_platform = {
@@ -238,7 +242,7 @@ def get_user_data(request):
             list_loaninfo = list()
 
             for expend_index in range(loan_count):
-                expendinfos = common.pure_get_exec(contract,
+                expendinfos = common.transaction_exec_local_result(contract,
                                                    LoanMethods.GET_EXPEND_BY_INDEX,
                                                    ContractNames.LOAN_CONTROLLER,
                                                    user_tag, loan_index,
@@ -265,7 +269,7 @@ def get_user_data(request):
                 list_repayment = list()
 
                 for repay_index in range(repayment_count):
-                    repaymentinfos = common.pure_get_exec(contract,
+                    repaymentinfos = common.transaction_exec_local_result(contract,
                                                           LoanMethods.GET_REPAYMENT_BY_INDEX,
                                                           ContractNames.LOAN_CONTROLLER,
                                                           user_tag, loan_index,

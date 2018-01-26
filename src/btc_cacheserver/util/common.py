@@ -17,7 +17,6 @@ from btc_cacheserver.defines import RouteMethods, ContractNames
 
 contract_instances = {}
 
-
 def get_sol_path(contract_name):
     return os.path.join(settings.CONTRACT_DIR, "%s.sol" % contract_name)
 
@@ -163,7 +162,7 @@ def transaction_exec_v2(_ins, method, *args, **kwargs):
     return transaction_exec(tx_ins, method, *args, **kwargs)
 
 
-def transaction_exec_result(_ins, method, *args, **kwargs):
+def transaction_exec_local_result(_ins, method, *args, **kwargs):
     tx_ins = _ins.call(transact_kwargs)
     method_call = getattr(tx_ins, method)
     return method_call(*args, **kwargs)
@@ -198,4 +197,5 @@ def role_removed(role_dest_address, dest_contract_name, dest_contract_address,
     _contract = get_contract_instance(dest_contract_address,
                                       get_abi_path(dest_contract_name))
     return role_removed_from_contract_ins(role_dest_address, _contract, role)
+
 
