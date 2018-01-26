@@ -157,7 +157,7 @@ def transaction_exec_v2(_ins, method, *args, **kwargs):
     return transaction_exec(tx_ins, method, *args, **kwargs)
 
 
-def transaction_exec_result(_ins, method, *args, **kwargs):
+def transaction_exec_local_result(_ins, method, *args, **kwargs):
     tx_ins = _ins.call(transact_kwargs)
     method_call = getattr(tx_ins, method)
     return method_call(*args, **kwargs)
