@@ -23,7 +23,7 @@ def deploy(contract_name, contract_arguments):
     
     # Get tx receipt to get contract address
     tx_receipt = get_transaction_receipt(tx_hash)
-    procedure.info("deploy transaction: %s " % tx_receipt)
+    procedure.info("deploy transaction: %s " % tx_receipt.transactionHash)
     
     contract_address = tx_receipt['contractAddress']
     procedure.end("%s address: %s", contract_name, contract_address)
