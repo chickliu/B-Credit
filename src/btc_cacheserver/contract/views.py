@@ -3,8 +3,6 @@
 
 import json
 import logging
-import user
-
 import sha3
 
 from django.http import JsonResponse
