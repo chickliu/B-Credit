@@ -54,15 +54,12 @@ def ws_connect(message):
             bt_list.reverse()
             for th in bt_list:
                 tx_info = w3.eth.getTransaction(th)
-                if tx_info['input']=="0x":
-                    tx_type = 0
-                    method_name = 'none'
-                elif not tx_info['to']:
+                method_name, args = decode_input(tx_info['input'])
+                if method_name in METHOD_TYPE_MAP:
+                    tx_type = METHOD_TYPE_MAP[method_name]
+                else:
                     tx_type = -1
                     method_name = 'none'
-                else:
-                    method_name, args = decode_input(tx_info['input'])
-                    tx_type = METHOD_TYPE_MAP[method_name]
                 data = {
                         "tx_hash": th,
                         "from": tx_info['from'],

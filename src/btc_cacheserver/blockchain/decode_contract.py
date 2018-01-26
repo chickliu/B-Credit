@@ -12,7 +12,7 @@ def decode_contract_call(contract_abi: list, call_data: str):
     call_data_bin = decode_hex(call_data)
     method_signature = call_data_bin[:4]
     for description in contract_abi:
-        if description.get('type') != 'function':
+        if description.get('type') != 'function' or description.get('inputs') == []:
             continue
         method_name = normalize_abi_method_name(description['name'])
         arg_types = [item['type'] for item in description['inputs']]
@@ -24,6 +24,8 @@ def decode_contract_call(contract_abi: list, call_data: str):
                 # Invalid args
                 continue
             return method_name, myargs
+    else:
+        return None,None
 
 
 def decode_input(str_input):
