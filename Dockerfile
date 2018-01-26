@@ -13,7 +13,7 @@ WORKDIR /app
 RUN mkdir -p /data
 ADD . /app
 RUN pip3 install -r /app/conf/requirements.txt ;\
-    apk update && apk add gcc g++ openssl-dev
+    apk update && apk add gcc g++ 
 RUN cp ./bin/docker-entrypoint.sh /entrypoint.sh
 VOLUME ["/data"]
 EXPOSE 9019
