@@ -12,8 +12,8 @@ FROM hub.rongshutong.com/library/python3:alpine
 WORKDIR /app
 RUN mkdir -p /data
 ADD . /app
-RUN pip3 install -r /app/conf/requirements.txt ;\
-    apk update && apk add gcc g++ 
+RUN apk update && apk add gcc g++ ;\ 
+    pip3 install -r /app/conf/requirements.txt
 RUN cp ./bin/docker-entrypoint.sh /entrypoint.sh
 VOLUME ["/data"]
 EXPOSE 9019
