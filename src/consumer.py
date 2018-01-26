@@ -8,13 +8,13 @@ created by antimoth at 2018-01-04
 import os
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "btc_cacheserver.settings")
 
+import time
 import sys
 import json
-import traceback
+import random
 
 
 from amqpstorm import Connection
-from web3 import exceptions
 from django.db import connection
 from django.db.utils import OperationalError
 
@@ -22,28 +22,10 @@ import base
 from btc_cacheserver import settings
 from btc_cacheserver.defines import WriteChainMsgTypes, ContractNames, RouteMethods, InterfaceMethods
 from btc_cacheserver.util.procedure_logging import Procedure
-from btc_cacheserver.contract.models import TransactionInfo, User, PlatFormInfo, LoanInformation, RepaymentInfo, InstallmentInfo
 from deploy import deploy
 
 
 w3 = base.create_web3_instance(10000)
-
-
-def write_tx_record(_ins, method, *args, **kwargs):
-    tx_receipt = base.transaction_exec_v2(_ins, method, *args, **kwargs) 
-    if tx_receipt is None:
-        return False, None
-    _transaction = TransactionInfo(
-        cumulativeGasUsed=tx_receipt.cumulativeGasUsed,
-        gasUsed=tx_receipt.gasUsed,
-        blockNumber=tx_receipt.blockNumber,
-        transactionIndex=tx_receipt.transactionIndex,
-        call_from=getattr(tx_receipt,"from"),
-        call_to=tx_receipt.to,
-        transactionHash=tx_receipt.transactionHash,
-    )
-    _transaction.save()
-    return False if tx_receipt.get("cumulativeGasUsed", 0) == settings.BLOCKCHAIN_CALL_GAS_LIMIT else True, _transaction
 
 
 def _deploy_user_contract(user_tag_str):
@@ -94,7 +76,7 @@ def create_loan_store(user_tag_str, loan_contract_address):
             RouteMethods.SET_ADDRESS, 
             ContractNames.USER_LOAN_STORE, 
             loan_store_address, 
-            _tx
+            _tx.transactionHash
     )
 
     loan_store = base.get_contract_instance(loan_store_address, base.get_abi_path(ContractNames.USER_LOAN_STORE))
@@ -137,7 +119,7 @@ def create_loan_contract(user_tag_str, controller_address):
             RouteMethods.SET_ADDRESS, 
             ContractNames.USER_LOAN, 
             loan_contract_address, 
-            _tx
+            _tx.transactionHash
     )
 
     loan_contract = base.get_contract_instance(loan_contract_address, base.get_abi_path(ContractNames.USER_LOAN))
@@ -179,7 +161,7 @@ def create_user_controller(controller_name):
             RouteMethods.SET_ADDRESS, 
             ContractNames.LOAN_CONTROLLER, 
             controller_address, 
-            _tx
+            _tx.transactionHash
     )
 
     # add authorization for interface
@@ -209,8 +191,9 @@ def update_data(method, *args):
 
     interface = base.get_contract_instance(settings.INTERFACE_ADDRESS, base.get_abi_path(ContractNames.INTERFACE))
     tx = base.transaction_exec_v2(interface, method, *args)
+    if tx.get("cumulativeGasUsed", 0) == settings.BLOCKCHAIN_CALL_GAS_LIMIT:
+        raise Exception("gas out limit! transaction failed!")
 
-    return tx
 
 
 def on_message(message):
@@ -218,16 +201,22 @@ def on_message(message):
     :param message:
     :return:
     """
+    time.sleep(random.randint(1, 10))
+    procedure = Procedure("<MSG>")
     msg_body = message.body
-    print("Message:", msg_body)
 
     _json = json.loads(msg_body)
     _msg_type = _json["type"]
 
     data = _json["data"]
     try:
+        user_tag_str = data["user_tag"]
+        loan_contract_address = get_loan_contract_address(ContractNames.LOAN_CONTROLLER, user_tag_str)
+        if not int(loan_contract_address, 16):
+            controller_address = get_controller_address(ContractNames.LOAN_CONTROLLER)
+            create_loan_contract(user_tag_str, controller_address)
+
         if WriteChainMsgTypes.MSG_TYPE_USER == _msg_type:
-            user_tag_str = data["user_tag"]
             loan_contract_address = get_loan_contract_address(ContractNames.LOAN_CONTROLLER, user_tag_str)
             if not int(loan_contract_address, 16):
                 controller_address = get_controller_address(ContractNames.LOAN_CONTROLLER)
@@ -251,7 +240,7 @@ def on_message(message):
                 data["order_number"].encode("utf-8"),
                 data["bank_card"].encode("utf-8"),
                 data["purpose"].encode("utf-8"),
-                data["overdue_days"],
+                data.get("overdue_days",0),
                 data["apply_amount"],
                 data["receive_amount"],
                 int(data["time_stamp"]),
@@ -278,7 +267,7 @@ def on_message(message):
                 w3.toBytes(hexstr=data["expend_tag"]), 
                 w3.toBytes(hexstr=data["repayment_tag"]), 
                 data["installment_number"],
-                data["overdue_days"],
+                data.get("overdue_days", 0),
                 data["repay_type"],
                 data["repay_amount"],
                 int(data["repay_time"])
@@ -287,15 +276,103 @@ def on_message(message):
         message.ack()
 
     except OperationalError:
-        traceback.print_exc()
+        procedure.exception("WRITE_BLOCK_ERROR, msg is %s", msg_body)
         connection.close()
-        message.reject(requeue=True)
-        message.channel.close()
+        message.reject(requeue=False)
+        # message.channel.close()
 
     except Exception as e:
-        traceback.print_exc()
-        message.reject(requeue=True)
-        message.channel.close()
+        procedure.exception("WRITE_BLOCK_ERROR, msg is %s", msg_body)
+        try:
+            if WriteChainMsgTypes.MSG_TYPE_EXPEND == _msg_type:
+                update_data(InterfaceMethods.UPDATE_LOAN, 
+                    ContractNames.LOAN_CONTROLLER,
+                    w3.toBytes(hexstr=data["user_tag"]), 
+                    w3.toBytes(hexstr=data["loan_tag"]), 
+                    "",
+                    0
+                )
+
+            elif WriteChainMsgTypes.MSG_TYPE_INSTALLMENT == _msg_type:
+                update_data(InterfaceMethods.UPDATE_EXPEND,
+                    ContractNames.LOAN_CONTROLLER,
+                    w3.toBytes(hexstr=data["user_tag"]), 
+                    w3.toBytes(hexstr=data["loan_tag"]), 
+                    w3.toBytes(hexstr=data["expend_tag"]), 
+                    "",
+                    "",
+                    "",
+                    0,
+                    0,
+                    0,
+                    int(time.time()),
+                    0
+                )
+
+            elif WriteChainMsgTypes.MSG_TYPE_REPAYMENT == _msg_type:
+                update_data(InterfaceMethods.UPDATE_EXPEND,
+                    ContractNames.LOAN_CONTROLLER,
+                    w3.toBytes(hexstr=data["user_tag"]), 
+                    w3.toBytes(hexstr=data["loan_tag"]), 
+                    w3.toBytes(hexstr=data["expend_tag"]), 
+                    "",
+                    "",
+                    "",
+                    0,
+                    0,
+                    0,
+                    int(time.time()),
+                    0
+                )
+        except Exception:
+            if WriteChainMsgTypes.MSG_TYPE_INSTALLMENT == _msg_type:
+                update_data(InterfaceMethods.UPDATE_LOAN, 
+                    ContractNames.LOAN_CONTROLLER,
+                    w3.toBytes(hexstr=data["user_tag"]), 
+                    w3.toBytes(hexstr=data["loan_tag"]), 
+                    "",
+                    0
+                )
+                update_data(InterfaceMethods.UPDATE_EXPEND,
+                    ContractNames.LOAN_CONTROLLER,
+                    w3.toBytes(hexstr=data["user_tag"]), 
+                    w3.toBytes(hexstr=data["loan_tag"]), 
+                    w3.toBytes(hexstr=data["expend_tag"]), 
+                    "",
+                    "",
+                    "",
+                    0,
+                    0,
+                    0,
+                    int(time.time()),
+                    0
+                )
+
+            elif WriteChainMsgTypes.MSG_TYPE_REPAYMENT == _msg_type:
+                update_data(InterfaceMethods.UPDATE_LOAN, 
+                    ContractNames.LOAN_CONTROLLER,
+                    w3.toBytes(hexstr=data["user_tag"]), 
+                    w3.toBytes(hexstr=data["loan_tag"]), 
+                    "",
+                    0
+                )
+                update_data(InterfaceMethods.UPDATE_EXPEND,
+                    ContractNames.LOAN_CONTROLLER,
+                    w3.toBytes(hexstr=data["user_tag"]), 
+                    w3.toBytes(hexstr=data["loan_tag"]), 
+                    w3.toBytes(hexstr=data["expend_tag"]), 
+                    "",
+                    "",
+                    "",
+                    0,
+                    0,
+                    0,
+                    int(time.time()),
+                    0
+                )
+
+        message.reject(requeue=False)
+        # message.channel.close()
 
 
 def consumer(queue_name):
@@ -304,7 +381,7 @@ def consumer(queue_name):
         with connection.channel() as channel:
             
             # Declare the Queue
-            channel.queue.declare(queue_name, durable=True)
+            channel.queue.declare(queue_name, durable=True, arguments={"x-dead-letter-exchange": settings.WRITE_BLOCKCHAIN_EXCHANGE, "x-dead-letter-routing-key": settings.WRITE_BLOCKCHAIN_QUEUE, })
             channel.exchange.declare(settings.WRITE_BLOCKCHAIN_EXCHANGE, exchange_type="topic", durable=True)
             channel.queue.bind(queue_name, settings.WRITE_BLOCKCHAIN_EXCHANGE, queue_name)
 
@@ -327,13 +404,5 @@ def consumer(queue_name):
                 channel.close()
 
 if __name__ == '__main__':
-    # create_user_controller(ContractNames.LOAN_CONTROLLER)
-
-    # controller_address = get_controller_address(ContractNames.LOAN_CONTROLLER)
-    # print(controller_address)
-    # create_loan_contract("d49a42c1a7ea8ab91d6437c66f58c2c123bd4ee49b9188960bab8ed5e357b116", controller_address)
-
-    # print(get_loan_contract_address(ContractNames.LOAN_CONTROLLER, "d49a42c1a7ea8ab91d6437c66f58c2c123bd4ee49b9188960bab8ed5e357b117"))
     queue_name = settings.WRITE_BLOCKCHAIN_QUEUE + "_" + sys.argv[1]
-    print(queue_name)
     consumer(queue_name)

@@ -14,18 +14,14 @@ import traceback
 
 from amqpstorm import Connection
 from amqpstorm import Message
-from web3 import exceptions
 from django.db import connection
 from django.db.utils import OperationalError
 
-import base
 from btc_cacheserver import settings
-from btc_cacheserver.defines import WriteChainMsgTypes, ContractNames, RouteMethods, InterfaceMethods
 from btc_cacheserver.util.procedure_logging import Procedure
-from btc_cacheserver.contract.models import TransactionInfo, User, PlatFormInfo, LoanInformation, RepaymentInfo, InstallmentInfo
-from deploy import deploy
 
 
+procedure = Procedure("<distribute_message>")
 
 def on_message(message):
     """This function is called on message received.
@@ -33,7 +29,7 @@ def on_message(message):
     :return:
     """
     msg_body = message.body
-    print("Message:", msg_body)
+    procedure.info("Message: %s", msg_body)
 
     _json = json.loads(msg_body)
 
@@ -55,11 +51,11 @@ def on_message(message):
     except OperationalError:
         traceback.print_exc()
         connection.close()
-        message.reject(requeue=True)
+        message.reject()
 
     except Exception as e:
         traceback.print_exc()
-        message.reject(requeue=True)
+        message.reject()
 
 
 def consumer():
@@ -73,7 +69,7 @@ def consumer():
             channel.queue.bind(settings.WRITE_BLOCKCHAIN_QUEUE, settings.WRITE_BLOCKCHAIN_EXCHANGE, settings.WRITE_BLOCKCHAIN_QUEUE)
             for i in range(16):
                 queue_name = settings.WRITE_BLOCKCHAIN_QUEUE + "_" + hex(i)[-1]
-                channel.queue.declare(queue_name, durable=True)
+                channel.queue.declare(queue_name, durable=True, arguments={"x-dead-letter-exchange": settings.WRITE_BLOCKCHAIN_EXCHANGE, "x-dead-letter-routing-key": settings.WRITE_BLOCKCHAIN_QUEUE, })
                 channel.queue.bind(queue_name, settings.WRITE_BLOCKCHAIN_EXCHANGE, queue_name)
 
             # Set QoS to 1.
@@ -95,11 +91,4 @@ def consumer():
                 channel.close()
 
 if __name__ == '__main__':
-    # create_user_controller(ContractNames.LOAN_CONTROLLER)
-
-    # controller_address = get_controller_address(ContractNames.LOAN_CONTROLLER)
-    # print(controller_address)
-    # create_loan_contract("d49a42c1a7ea8ab91d6437c66f58c2c123bd4ee49b9188960bab8ed5e357b116", controller_address)
-
-    # print(get_loan_contract_address(ContractNames.LOAN_CONTROLLER, "d49a42c1a7ea8ab91d6437c66f58c2c123bd4ee49b9188960bab8ed5e357b117"))
     consumer()
