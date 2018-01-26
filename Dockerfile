@@ -8,7 +8,7 @@
 ##   @MAINTAINER  : colin.lee<likunyao@rongshutong.com>
 ##
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-FROM hub.rongshutong.com/library/python3:ubuntu
+FROM hub.rongshutong.com/library/python3:alpine
 WORKDIR /app
 RUN mkdir -p /data
 ADD . /app
