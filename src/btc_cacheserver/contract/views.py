@@ -3,7 +3,6 @@
 
 import json
 import logging
-
 import sha3
 
 from django.http import JsonResponse
@@ -291,4 +290,3 @@ def get_user_data(request):
             'code': -1,
             'msg': str(err)
         })
-
