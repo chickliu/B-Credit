@@ -15,12 +15,12 @@ METHOD_SHOW_MAP = {"none":u"", "getLoanByIndex":u"借款", "updateLoan":u"借款
                    "getInstallmentByIndex":u"分期", "updateInstallment":u"分期",
                    "getRepaymentByIndex":u"还款", "updateRepayment":u"还款" }
 
-TYPE_SHOW_MAP = {0:u"转账", 1:u"查询", 2:u"写入"}
+TYPE_SHOW_MAP = {-1:u"部署合约", 0:u"转账", 1:u"查询", 2:u"写入"}
 
 provider = RPCProvider(host=settings.BLOCKCHAIN_RPC_HOST, port=settings.BLOCKCHAIN_RPC_PORT)
 w3 = Web3(provider)
 new_block_filter = w3.eth.filter('latest')
-new_transaction_filter = w3.eth.filter('pending')
+new_transaction_filter = w3.eth.filter('latest')
 
 def ws_connect(message):
     message.reply_channel.send({"accept": True})
@@ -43,10 +43,11 @@ def ws_connect(message):
         #sys.stdout.flush()
         Group("chain").send({"text": json_data})
 
-    def new_transaction_callback(tx_hash):
+    def new_transaction_callback(block_hash):
         data_list = []
         #block_num = w3.eth.getTransaction(tx_hash).blockNumber
-        block_num = w3.eth.blockNumber
+        block_num = w3.eth.getBlock(block_hash).number
+        #block_num = w3.eth.blockNumber
         for i in range(100):
             block = w3.eth.getBlock(block_num - i)
             bt_list = block.transactions
@@ -55,6 +56,9 @@ def ws_connect(message):
                 tx_info = w3.eth.getTransaction(th)
                 if tx_info['input']=="0x":
                     tx_type = 0
+                    method_name = 'none'
+                elif not tx_info['to']:
+                    tx_type = -1
                     method_name = 'none'
                 else:
                     method_name, args = decode_input(tx_info['input'])

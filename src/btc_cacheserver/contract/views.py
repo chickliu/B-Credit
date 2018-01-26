@@ -290,4 +290,3 @@ def get_user_data(request):
             'code': -1,
             'msg': str(err)
         })
-
