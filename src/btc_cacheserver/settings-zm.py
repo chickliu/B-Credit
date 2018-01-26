@@ -42,11 +42,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'btc_cacheserver.contract',
+    'btc_cacheserver.blockchain',
+    'channels',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -121,6 +125,10 @@ USE_L10N = True
 
 USE_TZ = True
 
+CORS_ORIGIN_ALLOW_ALL = False
+CORS_ALLOW_CREDENTIALS = True
+CORS_ORIGIN_WHITELIST = ("localhost:4200")
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
@@ -191,6 +199,15 @@ LOGGING = {
     }
 }
 
+#channel config
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "asgiref.inmemory.ChannelLayer",
+        "ROUTING": "btc_cacheserver.blockchain.routing.channel_routing",
+    },
+}
+
+
 # MQ_CONFIG
 MQ_HOST     = "10.2.0.150"
 MQ_PORT     = 5672
@@ -225,5 +242,7 @@ INTERFACE_ADDRESS        = "0xcB85ad01F2662c09E1C185C9FD78C34F96F49BE9"
 
 
 CONTRACT_DIR = os.path.join(BASE_DIR, "sol")
+INTERFACE_ABI_FILE = BASE_DIR + "/sol/Interface.json"
+INTERFACE_SOL_FILE = BASE_DIR + "/sol/Interface.sol"
 
 django.setup()

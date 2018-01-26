@@ -38,12 +38,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'btc_cacheserver.contract',
-    'channels'
+    'channels',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -118,7 +120,9 @@ USE_L10N = True
 
 USE_TZ = True
 
-
+CORS_ORIGIN_ALLOW_ALL = False
+CORS_ALLOW_CREDENTIALS = True
+CORS_ORIGIN_WHITELIST = ("localhost:4200")
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
@@ -193,3 +197,5 @@ CHANNEL_LAYERS = {
 INTERFACE_ABI_FILE = BASE_DIR + "/sol/Interface-abi.json"
 INTERFACE_SOL_FILE = BASE_DIR + "/sol/Interface.sol"
 USER_CONTRACT_ABI_FILE = "./test-user-contract-abi.json"
+
+
