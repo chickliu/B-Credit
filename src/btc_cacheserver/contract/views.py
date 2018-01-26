@@ -79,10 +79,19 @@ def _get_installmentinfo_with_loan(user_contract, user_tag, l_index, ex_index, c
 
 def _create_user_tag(username, phone, id):
     user_tag = sha3.keccak_256()
-    user_tag.update(username)
-    user_tag.update(id)
-    user_tag.update(phone)
+    user_tag.update(username.encode('utf-8'))
+    user_tag.update(id.encode('utf-8'))
+    user_tag.update(phone.encode('utf-8'))
     return user_tag.hexdigest()
+
+
+def _change_bytes2string(stringbytes):
+    return stringbytes.replace("\u0000", "")
+
+
+def _change_bytes2string2(stringbytes):
+    return stringbytes.replace("\x00", "").encode("raw_unicode_escape").decode("utf-8")
+
 
 @require_http_methods(['POST'])
 @csrf_exempt
@@ -216,8 +225,8 @@ def get_user_data(request):
 
     try:
         user_tag = _create_user_tag(username, phone, id_no)
-        user_tag = web3.Web3.toBytes(hexstr=user_tag)
         Log.info("user tag is {}".format(user_tag))
+        user_tag = web3.Web3.toBytes(hexstr=user_tag)
         contract = common.get_contract_instance(settings.INTERFACE_ADDRESS,
                                                 common.get_abi_path(ContractNames.INTERFACE))
         user_data = {
@@ -230,18 +239,18 @@ def get_user_data(request):
                                               ContractNames.LOAN_CONTROLLER, user_tag)
         list_platform = list()
 
-        for loan_index in range(platform_count):
+        for loan_index in range(1, platform_count+1):
             loaninfos = common.transaction_exec_local_result(contract, LoanMethods.GET_LOAN_BY_INDEX,
                                              ContractNames.LOAN_CONTROLLER,
                                              user_tag, loan_index)
             dt_platform = {
-                "platform": loaninfos[1],
+                "platform": _change_bytes2string(loaninfos[1]),
                 "ceiling": loaninfos[3],
             }
             loan_count = loaninfos[2]
             list_loaninfo = list()
 
-            for expend_index in range(loan_count):
+            for expend_index in range(1, loan_count + 1):
                 expendinfos = common.transaction_exec_local_result(contract,
                                                    LoanMethods.GET_EXPEND_BY_INDEX,
                                                    ContractNames.LOAN_CONTROLLER,
@@ -255,27 +264,27 @@ def get_user_data(request):
                                                              expend_index,
                                                              installment_count)
                 dt_loan = {
-                    "order_number": expendinfos[0],
+                    "order_number": _change_bytes2string(expendinfos[1]),
                     "apply_amount": expendinfos[7],
                     "exact_amount": expendinfos[8],
-                    "reason": expendinfos[3],
+                    "reason": _change_bytes2string(expendinfos[3]),
                     "apply_time": expendinfos[9],
                     "interest": expendinfos[10],
-                    "bank_card": expendinfos[2],
+                    "bank_card": _change_bytes2string(expendinfos[2]),
                     "overdue_days": expendinfos[6],
                     "repay_plans": repay_plans
                 }
 
                 list_repayment = list()
 
-                for repay_index in range(repayment_count):
+                for repay_index in range(1, repayment_count + 1):
                     repaymentinfos = common.transaction_exec_local_result(contract,
                                                           LoanMethods.GET_REPAYMENT_BY_INDEX,
                                                           ContractNames.LOAN_CONTROLLER,
                                                           user_tag, loan_index,
-                                                          expend_index)
+                                                          expend_index, repay_index)
                     dt_repayment = {
-                        "installment_number": expendinfos[0],
+                        "installment_number": _change_bytes2string(expendinfos[1]),
                         "real_repay_time": repaymentinfos[5],
                         "overdue_days": repaymentinfos[2],
                         "real_repay_amount": repaymentinfos[4],
