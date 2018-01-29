@@ -19,6 +19,7 @@ from solc import compile_files
 from btc_cacheserver import settings
 from btc_cacheserver.defines import RouteMethods, ContractNames,InterfaceMethods
 from btc_cacheserver.util.procedure_logging import Procedure
+from btc_cacheserver.contract.models import User, TransactionInfo, ContractDeployInfo
 
 contract_instances = {}
 
@@ -142,17 +143,33 @@ def get_contract_instance(contract_address, abi_file_path=None, account_time_out
 def get_transaction_receipt(tx_hash):
     tx_receipt = None
     _wait = 0
+
     while tx_receipt is None and _wait < settings.TRANSACTION_MAX_WAIT:
         tx_receipt = w3.eth.getTransactionReceipt(tx_hash)
         time.sleep(2)
         _wait += 1
+
     return tx_receipt   
 
 
 def transaction_exec(_ins, method, *args, **kwargs):
     method_call = getattr(_ins, method)
     tx_hash = method_call(*args, **kwargs)
-    return get_transaction_receipt(tx_hash)  
+    tx_receipt = get_transaction_receipt(tx_hash)  
+
+    _transaction = TransactionInfo(
+        cumulativeGasUsed=tx_receipt.cumulativeGasUsed,
+        gasUsed=tx_receipt.gasUsed,
+        blockNumber=tx_receipt.blockNumber,
+        call_from=getattr(tx_receipt,"from"),
+        call_to=tx_receipt.to,
+        transactionHash=tx_receipt.transactionHash,
+        method=method
+    )   
+    _transaction.save()
+
+    return tx_receipt
+
 
 
 def transaction_exec_v2(_ins, method, *args, **kwargs):
@@ -189,6 +206,14 @@ def deploy(contract_name, contract_arguments):
     
     contract_address = tx_receipt['contractAddress']
     procedure.end("%s address: %s", contract_name, contract_address)
+
+    _record = ContractDeployInfo(
+        address=contract_address,
+        name=contract_name,
+        tx=tx_receipt.transactionHash
+    )
+    _record.save()
+
     return contract_address
 
 def role_added_from_contract_ins(role_dest_address, dest_contract, role=RouteMethods.ROLE_WRITER):
@@ -274,6 +299,12 @@ def create_loan_contract(user_tag_str, controller_address):
             loan_contract_address, 
             _tx.transactionHash
     )
+
+    try:
+        _user = User.objects.get(tag=user_tag_str)
+    except User.DoesNotExist:
+        _user = User(tag=user_tag_str)
+        _user.save()
 
     create_loan_store(user_tag_str, loan_contract_address)
     

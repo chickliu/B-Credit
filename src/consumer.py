@@ -17,11 +17,13 @@ from amqpstorm import Connection
 from django.db import connection
 from django.db.utils import OperationalError
 from web3.exceptions import BadFunctionCallOutput
+from datetime import datetime
 
 import base
 from btc_cacheserver import settings
 from btc_cacheserver.defines import WriteChainMsgTypes, ContractNames, InterfaceMethods
 from btc_cacheserver.util.procedure_logging import Procedure
+from btc_cacheserver.contract.models import User, LoanInfo, ExpendInfo, InstallmentInfo, RepaymentInfo, TransactionInfo
 
 
 w3 = base.create_web3_instance(10000)
@@ -38,24 +40,61 @@ def update_data(method, *args):
     procedure.info("UPDATE_DATA tx is: %s", tx.transactionHash)
     if tx.get("cumulativeGasUsed", 0) == settings.BLOCKCHAIN_CALL_GAS_LIMIT:
         raise OutGasError("gas out limit! transaction failed!")
+    return tx.transactionHash
 
 
 def update_loan(data):
-    update_data(InterfaceMethods.UPDATE_LOAN, 
+    loan_tag = data["loan_tag"]
+    user_tag = data["user_tag"]
+    tx_hash = update_data(InterfaceMethods.UPDATE_LOAN, 
         ContractNames.LOAN_CONTROLLER,
-        w3.toBytes(hexstr=data["user_tag"]), 
-        w3.toBytes(hexstr=data["loan_tag"]), 
+        w3.toBytes(hexstr=user_tag), 
+        w3.toBytes(hexstr=loan_tag), 
         data["platform"].encode("utf-8"),
         data["credit"] or 0
     )
+    try:
+        _record = LoanInfo.objects.get(tag=loan_tag)
 
+        if _record.owner.tag != user_tag:
+            raise Exception("unexpected user tag in loaninfo, bad dada!")
+
+        _record.credit_ceiling=data["credit"] or 0
+        _record.platform=data["platform"]
+
+    except LoanInfo.DoesNotExist:
+        user = User.objects.get(tag=user_tag)
+        _record = LoanInfo(
+            owner=user,
+            tag=loan_tag,
+            credit_ceiling=data["credit"] or 0,
+            platform=data["platform"]
+        )
+
+    _record.save()
+
+    tx = TransactionInfo.objects.get(transactionHash=tx_hash)
+    tx.loan = _record
+    tx.save()
+
+def mock_loan(data):
+    _loan_data = {
+        "user_tag": data["user_tag"],
+        "loan_tag": data["loan_tag"],
+        "platform": "",
+        "credit": 0,
+    }
+    update_loan(_loan_data)
 
 def update_expend(data):
-    update_data(InterfaceMethods.UPDATE_EXPEND,
+    loan_tag = data["loan_tag"]
+    expend_tag = data["expend_tag"]
+
+    tx_hash = update_data(InterfaceMethods.UPDATE_EXPEND,
         ContractNames.LOAN_CONTROLLER,
         w3.toBytes(hexstr=data["user_tag"]), 
-        w3.toBytes(hexstr=data["loan_tag"]), 
-        w3.toBytes(hexstr=data["expend_tag"]), 
+        w3.toBytes(hexstr=loan_tag), 
+        w3.toBytes(hexstr=expend_tag), 
         data["order_number"][-32:].encode("utf-8"),
         data["bank_card"].encode("utf-8"),
         data["purpose"].encode("utf-8"),
@@ -66,22 +105,106 @@ def update_expend(data):
         data["interest"]
     )
 
+    try:
+        _record = ExpendInfo.objects.get(tag=expend_tag)
+
+        if _record.loaninfo.tag != loan_tag:
+            raise Exception("unexpected loan tag in expendinfo, bad data!")
+
+        _record.apply_amount = data["apply_amount"]
+        _record.exact_amount = data["receive_amount"]     
+        _record.interest = data["interest"]
+        _record.overdue_days = data["overdue_days"]
+        _record.apply_time = datetime.fromtimestamp(int(data["time_stamp"]))
+        _record.bank_card = data["bank_card"]
+        _record.order_number = data["order_number"][-32:]
+        _record.reason = data["purpose"]
+
+    except ExpendInfo.DoesNotExist:
+        loan = LoanInfo.objects.get(tag=loan_tag)
+        _record = ExpendInfo(
+            loaninfo=loan,          
+            apply_amount=data["apply_amount"],   
+            exact_amount=data["receive_amount"],
+            interest=data["interest"],
+            overdue_days=data.get("overdue_days", 0),
+            apply_time=datetime.fromtimestamp(int(data["time_stamp"])),     
+            bank_card=data["bank_card"],
+            tag=expend_tag,
+            order_number=data["order_number"][-32:],
+            reason=data["purpose"]
+        )
+
+    _record.save()
+
+    tx = TransactionInfo.objects.get(transactionHash=tx_hash)
+    tx.expend = _record
+    tx.save()
+
+
+def mock_expend(data):
+    _expend_data = {
+        "user_tag": data["user_tag"], 
+        "loan_tag": data["loan_tag"], 
+        "expend_tag": data["expend_tag"], 
+        "bank_card": "",
+        "order_number": "",
+        "purpose": "",
+        "apply_amount": 0,
+        "receive_amount": 0,
+        "interest": 0,
+        "time_stamp": int(time.time()),
+        "overdue_days":0,
+    }
+    update_expend(_expend_data)
 
 def update_installment(data):
-    update_data(InterfaceMethods.UPDATE_INSTALLMENT,
+    installment_tag = data["installment_tag"]
+    expend_tag = data["expend_tag"]
+
+    tx_hash = update_data(InterfaceMethods.UPDATE_INSTALLMENT,
         ContractNames.LOAN_CONTROLLER,
         w3.toBytes(hexstr=data["user_tag"]), 
         w3.toBytes(hexstr=data["loan_tag"]), 
-        w3.toBytes(hexstr=data["expend_tag"]), 
-        w3.toBytes(hexstr=data["installment_tag"]), 
+        w3.toBytes(hexstr=expend_tag), 
+        w3.toBytes(hexstr=installment_tag), 
         data["installment_number"],
         int(data["repay_time"]),
         data["repay_amount"]
     )
 
 
+    try:
+        _record = InstallmentInfo.objects.get(tag=installment_tag)
+
+        if _record.expendinfo.tag != expend_tag:
+            raise Exception("unexpected expend tag in installmentinfo, bad data!")
+
+        _record.installment_number = data["installment_number"]
+        _record.repay_amount = data["repay_amount"]
+        _record.repay_time = datetime.fromtimestamp(int(data["repay_time"]))
+
+    except InstallmentInfo.DoesNotExist:
+        expend = ExpendInfo.objects.get(tag=expend_tag)
+        _record = InstallmentInfo(
+            expendinfo=expend,          
+            installment_number=data["installment_number"],
+            repay_amount=data["repay_amount"],
+            repay_time=datetime.fromtimestamp(int(data["repay_time"])),     
+            tag=installment_tag
+        )
+
+    _record.save()
+
+    tx = TransactionInfo.objects.get(transactionHash=tx_hash)
+    tx.installment = _record
+    tx.save()
+
 def update_repayment(data):
-    update_data(InterfaceMethods.UPDATE_REPAYMENT,
+    repayment_tag = data["repayment_tag"]
+    expend_tag = data["expend_tag"]
+
+    tx_hash = update_data(InterfaceMethods.UPDATE_REPAYMENT,
         ContractNames.LOAN_CONTROLLER,
         w3.toBytes(hexstr=data["user_tag"]), 
         w3.toBytes(hexstr=data["loan_tag"]), 
@@ -94,32 +217,36 @@ def update_repayment(data):
         int(data["repay_time"])
     )
 
+    try:
+        _record = RepaymentInfo.objects.get(tag=repayment_tag)
+        
+        if _record.expendinfo.tag != expend_tag:
+            raise Exception("unexpected expend tag in repaymentinfo, bad data!")
 
-def mock_loan(data):
-    update_data(InterfaceMethods.UPDATE_LOAN, 
-        ContractNames.LOAN_CONTROLLER,
-        w3.toBytes(hexstr=data["user_tag"]), 
-        w3.toBytes(hexstr=data["loan_tag"]), 
-        "",
-        0
-    )
+        _record.installment_number = data["installment_number"]
+        _record.overdue_days = data["overdue_days"]
+        _record.repay_amount_type = data["repay_type"]
+        _record.real_repay_amount = data["repay_amount"]
+        _record.real_repay_time = datetime.fromtimestamp(int(data["repay_time"]))
 
+    except RepaymentInfo.DoesNotExist:
+        expend = ExpendInfo.objects.get(tag=expend_tag)
+        _record = RepaymentInfo(
+            expendinfo=expend,
+            installment_number=data["installment_number"],
+            overdue_days=data["overdue_days"],
+            real_repay_time=datetime.fromtimestamp(int(data["repay_time"])),
+            repay_amount_type=data["repay_type"],
+            real_repay_amount=data["repay_amount"],
+            tag=repayment_tag
+        )
 
-def mock_expend(data):
-    update_data(InterfaceMethods.UPDATE_EXPEND,
-        ContractNames.LOAN_CONTROLLER,
-        w3.toBytes(hexstr=data["user_tag"]), 
-        w3.toBytes(hexstr=data["loan_tag"]), 
-        w3.toBytes(hexstr=data["expend_tag"]), 
-        "",
-        "",
-        "",
-        0,
-        0,
-        0,
-        int(time.time()),
-        0
-    )
+    _record.save()
+
+    tx = TransactionInfo.objects.get(transactionHash=tx_hash)
+    tx.repayment = _record
+    tx.save()
+
 
 def on_message(message):
     """This function is called on message received.

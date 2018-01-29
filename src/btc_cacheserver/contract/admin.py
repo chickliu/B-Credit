@@ -11,7 +11,7 @@ class UserAdmin(admin.ModelAdmin):
     ordering = ['-id']
 
 
-class PlatFormAdmin(admin.ModelAdmin):
+class LoanFormAdmin(admin.ModelAdmin):
     list_display = ["owner_username", "platform", "credit_ceiling"]
     search_fields = ['platform']
     ordering = ['-id']
@@ -20,7 +20,7 @@ class PlatFormAdmin(admin.ModelAdmin):
         return "{}".format(obj.owner.username)
 
 
-class LoanInfoAdmin(admin.ModelAdmin):
+class ExpendInfoAdmin(admin.ModelAdmin):
     list_display = ["platform_name", "order_number", "apply_amount", "exact_amount", "reason", "apply_time", "interest", "bank_card", "overdue_days"]
     search_fields = ['order_number']
     ordering = ['-id']
@@ -39,7 +39,7 @@ class RepaymentAdmin(admin.ModelAdmin):
 
 
 admin.site.register(models.User, UserAdmin)
-admin.site.register(models.PlatFormInfo, PlatFormAdmin)
-admin.site.register(models.LoanInformation, LoanInfoAdmin)
+admin.site.register(models.LoanInfo, LoanFormAdmin)
+admin.site.register(models.ExpendInfo, ExpendInfoAdmin)
 admin.site.register(models.RepaymentInfo, RepaymentAdmin)
 

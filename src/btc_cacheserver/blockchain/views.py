@@ -12,7 +12,7 @@ from web3 import Web3, RPCProvider
 
 from btc_cacheserver import settings
 from btc_cacheserver.blockchain.models import BlockNumberRecording
-from btc_cacheserver.contract.models import PlatFormInfo, LoanInformation, RepaymentInfo
+from btc_cacheserver.contract.models import LoanInfo, ExpendInfo, RepaymentInfo
 from btc_cacheserver.util import common
 from btc_cacheserver.defines import ContractNames, LoanMethods
 
@@ -153,8 +153,8 @@ def get_blocknumber_recording(request):
 @csrf_exempt
 def get_total_number(request):
     try:
-        total_platform = PlatFormInfo.objects.count()
-        total_loan = LoanInformation.objects.count()
+        total_platform = LoanInfo.objects.count()
+        total_loan = ExpendInfo.objects.count()
         total_repay = RepaymentInfo.objects.count()
 
         data = {

@@ -12,7 +12,7 @@ from django.views.decorators.http import require_http_methods
 from django.db.models import Q
 from django.conf import settings
 
-from btc_cacheserver.contract.models import User, PlatFormInfo, LoanInformation, RepaymentInfo, InstallmentInfo
+from btc_cacheserver.contract.models import User, LoanInfo, ExpendInfo, RepaymentInfo, InstallmentInfo
 from btc_cacheserver.util import common
 from btc_cacheserver.defines import ContractNames, LoanMethods
 
@@ -46,11 +46,11 @@ def _save_user_and_platform_info(user):
 
         platform = user.get("platform", "")
         ceiling = user.get("credit_ceiling", 0)
-        platform_obj = _check_model_data(PlatFormInfo, Q(platform=platform,
+        platform_obj = _check_model_data(LoanInfo, Q(platform=platform,
                                                          owner=user_obj))
 
         if not platform_obj:
-            platform_obj = PlatFormInfo.objects.create(platform=platform,
+            platform_obj = LoanInfo.objects.create(platform=platform,
                                                        credit_ceiling=ceiling,
                                                        owner=user_obj)
         return platform_obj
@@ -118,7 +118,7 @@ def update_load_data(request):
             else:
                 for loan in loan_datas:
                     order_number = loan.get("order_number", "")
-                    loan_id = _check_model_data(LoanInformation, Q(order_number=order_number,
+                    loan_id = _check_model_data(ExpendInfo, Q(order_number=order_number,
                                                                    platform=platform_obj))
 
                     if not loan_id:
@@ -130,7 +130,7 @@ def update_load_data(request):
                         bank_card = loan.get("bank_card", "")
                         overdue_days = loan.get("overdue_days", 0)
 
-                        loan_obj = LoanInformation.objects.create(platform=platform_obj,
+                        loan_obj = ExpendInfo.objects.create(platform=platform_obj,
                                                                order_number=order_number,
                                                                apply_amount=apply_amount,
                                                                exact_amount=exact_amount,
@@ -184,7 +184,7 @@ def update_repayment_data(request):
             else:
                 for repayment in repayments:
                     order_number = repayment.get("order_number", "")
-                    loan_info = LoanInformation.objects.filter(order_number=order_number).first()
+                    loan_info = ExpendInfo.objects.filter(order_number=order_number).first()
                     if not loan_info:
                         Log.warn("Order number is error,can't find loan information.")
                         continue
