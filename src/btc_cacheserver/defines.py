@@ -30,6 +30,8 @@ class ContractNames(object):
     USER_LOAN_STORE_ROUTE = "UserLoanStoreRoute"
     USER_LOAN_STORE       = "UserLoanStore"
 
+    TOKEN                 = "Token"
+
 
 class RoleBase(object):
     ROLE_WRITER       = "writer"

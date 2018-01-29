@@ -203,8 +203,8 @@ def on_message(message):
     :param message:
     :return:
     """
-    time.sleep(random.randint(1, 10))
-    procedure = Procedure("<MSG>")
+    # time.sleep(random.randint(1, 10))
+    procedure = Procedure("<MSG-%s>" % sys.argv[1])
     msg_body = message.body
 
     _json = json.loads(msg_body)
@@ -277,6 +277,7 @@ def on_message(message):
         else:
             procedure.info("UNKOWN_MSG, message is %s", msg_body)
             message.reject(requeue=False)
+            # message.reject(requeue=True)
             return
 
         procedure.info("ACK_MSG, message is %s", msg_body)
@@ -286,6 +287,7 @@ def on_message(message):
         procedure.exception("MSG_WRITE_BLOCK_ERROR, message is %s", msg_body)
         connection.close()
         message.reject(requeue=False)
+        # message.reject(requeue=True)
         # message.channel.close()
 
     except Exception as e:
@@ -381,6 +383,7 @@ def on_message(message):
 
         procedure.info("REJECT_MSG, message is %s", msg_body)
         message.reject(requeue=False)
+        # message.reject(requeue=True)
         # message.channel.close()
 
 
