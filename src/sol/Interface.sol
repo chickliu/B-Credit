@@ -2,12 +2,10 @@ pragma solidity ^0.4.18;
 
 import {Pausable} from "./Pausable.sol";
 import {ControllerRoute} from "./ControllerRoute.sol";
-import {UserController} from "./UserController.sol";
+import {LoanController} from "./LoanController.sol";
 
 contract Interface is Pausable {
     ControllerRoute router;
-    
-    string public constant USER_CONTROLLER = "UserController";
     
     //event
     event InterfaceSetRouter(
@@ -15,6 +13,7 @@ contract Interface is Pausable {
         address caller, 
         address controller_route_address
     );
+
     event WriteData(
         address origin,
         address caller,
@@ -49,10 +48,10 @@ contract Interface is Pausable {
         return "Interface";
     }
     
-    function setRouter(
+    function setControllerRoute(
         address _controller_route_address
     )
-    whenNotPaused canWrite public
+    whenNotPaused onlyAdmin public
     {
         require(_controller_route_address != address(0));
         router = ControllerRoute(_controller_route_address);
@@ -63,6 +62,28 @@ contract Interface is Pausable {
             msg.sender, 
             _controller_route_address
         );
+    }
+    
+    function getControllerRouteAddress(
+    
+    )
+    whenNotPaused canCall public view
+    returns(
+        address
+    )
+    {
+        return router;
+    }
+    
+    function getControllerVersion(
+        string _controller_name
+    )
+    whenNotPaused canCall public view
+    returns(
+        uint32
+    )
+    {
+        return router.getCurrentVersion(_controller_name);
     }
     
     function getControllerAddress(
@@ -76,20 +97,92 @@ contract Interface is Pausable {
         return router.getCurrentAddress(_controller_name);
     }
     
-    function _getUserController(
+    function _getLoanController(
         string _controller_name
     )
     whenNotPaused canCall internal view
     returns (
-        UserController user_controller
+        LoanController
     )
     {
-        address user_controller_address = getControllerAddress(_controller_name);
-        require(user_controller_address != address(0));
-        return UserController(user_controller_address);
+        address loan_controller_address = getControllerAddress(_controller_name);
+        require(loan_controller_address != address(0));
+        return LoanController(loan_controller_address);
+    }
+    
+    function getLoanContractRouteAddress(
+        string _controller_name
+    )
+    whenNotPaused canCall public view
+    returns(
+        address
+    )
+    {
+        return _getLoanController(_controller_name).getLoanContractRouteAddress();
+    }
+    
+    function getLoanContractVersion(
+        string _controller_name,
+        bytes32 _user_tag
+    )
+    whenNotPaused canCall public view
+    returns(
+        uint32
+    )
+    {
+        return _getLoanController(_controller_name).getLoanContractVersion(_user_tag);
+    }
+    
+    function getLoanContractAddress(
+        string _controller_name,
+        bytes32 _user_tag
+    )
+    whenNotPaused canCall public view
+    returns (
+        address
+    )
+    {
+        return _getLoanController(_controller_name).getLoanContractAddress(_user_tag);
+    }
+    
+    function getUserLoanStoreRouteAddress(
+        string _controller_name,
+        bytes32 _user_tag
+    )
+    whenNotPaused canCall public view
+    returns(
+        address
+    )
+    {
+        return _getLoanController(_controller_name).getUserLoanStoreRouteAddress(_user_tag);
+    }
+    
+    function getUserLoanStoreVersion(
+        string _controller_name,
+        bytes32 _user_tag
+    )
+    whenNotPaused canCall public view
+    returns(
+        uint32
+    )
+    {
+        return _getLoanController(_controller_name).getUserLoanStoreVersion(_user_tag);
+    }
+    
+    function getUserLoanStoreAddress(
+        string _controller_name,
+        bytes32 _user_tag
+    )
+    whenNotPaused canCall public view
+    returns(
+        address
+    )
+    {
+        return _getLoanController(_controller_name).getUserLoanStoreAddress(_user_tag);
     }
     
     function getLoanTimes(
+        string _controller_name,
         bytes32 _user_tag
     ) 
     whenNotPaused canCall public view 
@@ -97,10 +190,11 @@ contract Interface is Pausable {
         uint32
     ) 
     {
-        return _getUserController(USER_CONTROLLER).getLoanTimes(_user_tag);
+        return _getLoanController(_controller_name).getLoanTimes(_user_tag);
     }
     
     function getLatestUpdate(
+        string _controller_name,
         bytes32 _user_tag
     ) 
     whenNotPaused canCall public view 
@@ -108,10 +202,11 @@ contract Interface is Pausable {
         uint
     ) 
     {
-        return _getUserController(USER_CONTROLLER).getLatestUpdate(_user_tag);
+        return _getLoanController(_controller_name).getLatestUpdate(_user_tag);
     }
     
     function updateLoan(
+        string _controller_name,
         bytes32 _user_tag,   // 用户唯一标识
         bytes32 _loan_tag,   // 借贷记录唯一标识
         bytes32 _platform,   // 平台
@@ -119,7 +214,7 @@ contract Interface is Pausable {
     ) 
     whenNotPaused canWrite public 
     {
-        _getUserController(USER_CONTROLLER).updateLoan(
+        _getLoanController(_controller_name).updateLoan(
             _user_tag, 
             _loan_tag, 
             _platform, 
@@ -136,6 +231,7 @@ contract Interface is Pausable {
     }
     
     function getLoanByIndex(
+        string _controller_name,
         bytes32 _user_tag,  // 用户唯一标识
         uint32 _index       // 插入借贷记录时的loanCounter值
     ) 
@@ -147,13 +243,14 @@ contract Interface is Pausable {
         uint32   // 授信额度
     ) 
     {
-        return _getUserController(USER_CONTROLLER).getLoanByIndex(
+        return _getLoanController(_controller_name).getLoanByIndex(
             _user_tag, 
             _index
         );
     }
     
     function updateExpenditure(
+        string _controller_name,
         bytes32 _user_tag,     // 用户唯一标识
         bytes32 _loan_tag,     // 借贷记录唯一标识
         bytes32 _expend_tag,   // 支用记录唯一标识
@@ -168,7 +265,7 @@ contract Interface is Pausable {
     ) 
     whenNotPaused canWrite public 
     {
-        _getUserController(USER_CONTROLLER).updateExpenditure(
+        _getLoanController(_controller_name).updateExpenditure(
             _user_tag,
             _loan_tag,
             _expend_tag,
@@ -192,6 +289,7 @@ contract Interface is Pausable {
     }
     
     function getExpendByIndex(
+        string _controller_name,
         bytes32 _user_tag,    // 用户唯一标识
         uint32 _loan_index,   // 插入借贷记录时的loanCounter值
         uint32 _expend_index  // 插入支用记录时的expenditureCounter值
@@ -211,7 +309,7 @@ contract Interface is Pausable {
         uint      // 利息
     ) 
     {
-        return _getUserController(USER_CONTROLLER).getExpendByIndex(
+        return _getLoanController(_controller_name).getExpendByIndex(
             _user_tag, 
             _loan_index, 
             _expend_index
@@ -219,6 +317,7 @@ contract Interface is Pausable {
     }
     
     function updateInstallment(
+        string _controller_name,
         bytes32 _user_tag,          // 用户唯一标识
         bytes32 _loan_tag,          // 借贷记录唯一标识
         bytes32 _expend_tag,        // 支用记录唯一标识
@@ -229,7 +328,7 @@ contract Interface is Pausable {
     ) 
     whenNotPaused canWrite public 
     {
-        _getUserController(USER_CONTROLLER).updateInstallment(
+        _getLoanController(_controller_name).updateInstallment(
             _user_tag,
             _loan_tag,
             _expend_tag,
@@ -249,6 +348,7 @@ contract Interface is Pausable {
     }
     
     function getInstallmentByIndex(
+        string _controller_name,
         bytes32 _user_tag,          // 用户唯一标识
         uint32 _loan_index,       // 插入借贷记录时的loanCounter值
         uint32 _expend_index,     // 插入支用记录时的expenditureCounter值
@@ -262,7 +362,7 @@ contract Interface is Pausable {
         uint     // 还款金额
     ) 
     {
-        return _getUserController(USER_CONTROLLER).getInstallmentByIndex(
+        return _getLoanController(_controller_name).getInstallmentByIndex(
             _user_tag,
             _loan_index, 
             _expend_index,
@@ -271,6 +371,7 @@ contract Interface is Pausable {
     }
     
     function updateRepayment(
+        string _controller_name,
         bytes32 _user_tag,          // 用户唯一标识
         bytes32 _loan_tag,          // 借贷记录唯一标识
         bytes32 _expend_tag,        // 支用记录唯一标识
@@ -283,7 +384,7 @@ contract Interface is Pausable {
     ) 
     whenNotPaused canWrite public 
     {
-        _getUserController(USER_CONTROLLER).updateRepayment(
+        _getLoanController(_controller_name).updateRepayment(
             _user_tag,
             _loan_tag,
             _expend_tag,
@@ -305,6 +406,7 @@ contract Interface is Pausable {
     }
     
     function getRepaymentByIndex(
+        string _controller_name,
         bytes32 _user_tag,          // 用户唯一标识
         uint32 _loan_index,     // 插入借贷记录时loanCounter的值
         uint32 _expend_index,   // 插入支用记录时expenditureCounter的值
@@ -320,7 +422,7 @@ contract Interface is Pausable {
         uint     // 还款时间
     ) 
     {
-        return _getUserController(USER_CONTROLLER).getRepaymentByIndex(
+        return _getLoanController(_controller_name).getRepaymentByIndex(
             _user_tag,
             _loan_index, 
             _expend_index, 

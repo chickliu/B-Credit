@@ -2,9 +2,9 @@ pragma solidity ^0.4.18;
 
 import {Pausable} from "./Pausable.sol";
 
-contract UserContractStore is Pausable {
+contract LoanContractRoute is Pausable {
 
-    // user_tag => version => user_contract_address
+    // user_tag => version => loan_contract_address
     mapping(bytes32 => mapping(uint32 => address)) store;
     
     // user_tag => current_version
@@ -35,7 +35,7 @@ contract UserContractStore is Pausable {
         bytes32
     )
     {
-        return "UserContractStore";
+        return "LoanContractRoute";
     }
     
     function setCurrentVersion(
@@ -54,13 +54,16 @@ contract UserContractStore is Pausable {
         bool set_current
     ) 
     whenNotPaused canWrite public 
+    returns(
+        uint32
+    )
     {
         
         uint32 assume_version = 0;
         
         // unique the user_contract_address
         uint32 max_version = maxVersionStore[user_tag];
-        for (uint32 i=0; i <= max_version; i++) {
+        for (uint32 i=1; i <= max_version; i++) {
             if(store[user_tag][i] != user_contract_address) continue;
             assume_version = i;
         }
@@ -75,6 +78,8 @@ contract UserContractStore is Pausable {
         if(set_current) {
             setCurrentVersion(user_tag, assume_version);
         }
+        
+        return assume_version;
     }
     
     function getCurrentVersion(
@@ -122,3 +127,4 @@ contract UserContractStore is Pausable {
         dest = getAddress(user_tag, getCurrentVersion(user_tag));
     }
 }
+

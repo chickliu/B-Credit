@@ -3,13 +3,19 @@
 
 import json
 import logging
+import sha3
+import web3
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q
+from django.conf import settings
 
 from btc_cacheserver.contract.models import User, PlatFormInfo, LoanInformation, RepaymentInfo, InstallmentInfo
+from btc_cacheserver.util import common
+from btc_cacheserver.defines import ContractNames, LoanMethods
+
 
 Log = logging.getLogger("scripts")
 
@@ -50,20 +56,41 @@ def _save_user_and_platform_info(user):
         return platform_obj
 
 
-def _get_installmentinfo_with_loan(loaninfo):
-    installmentinfos = InstallmentInfo.objects.filter(loan_info=loaninfo)
-    if installmentinfos:
+def _get_installmentinfo_with_loan(user_contract, user_tag, l_index, ex_index, count):
+
+    if count > 0:
         list_info = []
-        for info in installmentinfos:
+        for index in range(count):
+            installment_infos = common.pure_get_exec(user_contract,
+                                                     LoanMethods.GET_INSTALLMENT_BY_INDEX,
+                                                     ContractNames.LOAN_CONTROLLER,
+                                                     user_tag, l_index, ex_index,
+                                                     index)
             data = {
-                "installment_number": info.installment_number,
-                "repay_time": info.repay_time,
-                "repay_amount": info.repay_amount
+                "installment_number": installment_infos[1],
+                "repay_time": installment_infos[2],
+                "repay_amount": installment_infos[3]
            }
             list_info.append(data)
         return json.dumps(list_info)
     else:
         return ""
+
+
+def _create_user_tag(username, phone, id):
+    user_tag = sha3.keccak_256()
+    user_tag.update(username.encode('utf-8'))
+    user_tag.update(id.encode('utf-8'))
+    user_tag.update(phone.encode('utf-8'))
+    return user_tag.hexdigest()
+
+
+def _change_bytes2string(stringbytes):
+    return stringbytes.replace("\u0000", "")
+
+
+def _change_bytes2string2(stringbytes):
+    return stringbytes.replace("\x00", "").encode("raw_unicode_escape").decode("utf-8")
 
 
 @require_http_methods(['POST'])
@@ -188,64 +215,84 @@ def update_repayment_data(request):
 @require_http_methods(['GET'])
 @csrf_exempt
 def get_user_data(request):
-    phone_no = request.GET.get('phone', '')
+    username = request.GET.get('name', '')
+    phone = request.GET.get('phone', '')
     id_no = request.GET.get('id', '')
 
-    Log.info("phone is {}, id is {}".format(phone_no, id_no))
-    if not (phone_no or id_no):
-        return JsonResponse({"code": -1, "msg": "error:phone or id is null."})
+    Log.info("id is {}".format(id_no))
+    if not (username or phone or id_no):
+        return JsonResponse({"code": -1, "msg": "error:phone is null."})
 
     try:
-        user_obj = User.objects.filter(phone_no=phone_no, id_no=id_no)
-
-        if not user_obj:
-            return JsonResponse({"code": -1, "msg": "error:can't find user."})
-
-        user = user_obj.first()
+        user_tag = _create_user_tag(username, phone, id_no)
+        Log.info("user tag is {}".format(user_tag))
+        user_tag = web3.Web3.toBytes(hexstr=user_tag)
+        contract = common.get_contract_instance(settings.INTERFACE_ADDRESS,
+                                                common.get_abi_path(ContractNames.INTERFACE))
         user_data = {
-                "username": user.username,
-                "phone_no": user.phone_no,
-                "id_no": user.id_no,
+                "username": username,
+                "phone_no": phone,
+                "id_no": id_no,
             }
 
-        platforminfos = PlatFormInfo.objects.filter(owner=user)
+        platform_count = common.transaction_exec_local_result(contract, LoanMethods.GET_LOAN_TIMES,
+                                              ContractNames.LOAN_CONTROLLER, user_tag)
         list_platform = list()
-        for platform in platforminfos:
-            dt_platform = {
-                    "platform": platform.platform,
-                    "ceiling": platform.credit_ceiling,
-                }
-            loaninfos = LoanInformation.objects.filter(platform=platform)
 
+        for loan_index in range(1, platform_count+1):
+            loaninfos = common.transaction_exec_local_result(contract, LoanMethods.GET_LOAN_BY_INDEX,
+                                             ContractNames.LOAN_CONTROLLER,
+                                             user_tag, loan_index)
+            dt_platform = {
+                "platform": _change_bytes2string(loaninfos[1]),
+                "ceiling": loaninfos[3],
+            }
+            loan_count = loaninfos[2]
             list_loaninfo = list()
-            for loan in loaninfos:
-                repay_plans = _get_installmentinfo_with_loan(loan)
+
+            for expend_index in range(1, loan_count + 1):
+                expendinfos = common.transaction_exec_local_result(contract,
+                                                   LoanMethods.GET_EXPEND_BY_INDEX,
+                                                   ContractNames.LOAN_CONTROLLER,
+                                                   user_tag, loan_index,
+                                                   expend_index)
+                installment_count = expendinfos[4]
+                repayment_count = expendinfos[5]
+                repay_plans = _get_installmentinfo_with_loan(contract,
+                                                             user_tag,
+                                                             loan_index,
+                                                             expend_index,
+                                                             installment_count)
                 dt_loan = {
-                        "order_number": loan.order_number,
-                        "apply_amount": loan.apply_amount,
-                        "exact_amount": loan.exact_amount,
-                        "reason": loan.reason,
-                        "apply_time": loan.apply_time,
-                        "interest": loan.interest,
-                        "bank_card": loan.bank_card,
-                        "overdue_days": loan.overdue_days,
-                        "repay_plans": repay_plans
-                    }
-                repaymentinfo = RepaymentInfo.objects.filter(loan_info=loan)
+                    "order_number": _change_bytes2string(expendinfos[1]),
+                    "apply_amount": expendinfos[7],
+                    "exact_amount": expendinfos[8],
+                    "reason": _change_bytes2string(expendinfos[3]),
+                    "apply_time": expendinfos[9],
+                    "interest": expendinfos[10],
+                    "bank_card": _change_bytes2string(expendinfos[2]),
+                    "overdue_days": expendinfos[6],
+                    "repay_plans": repay_plans
+                }
+
                 list_repayment = list()
-                for repayment in repaymentinfo:
+
+                for repay_index in range(1, repayment_count + 1):
+                    repaymentinfos = common.transaction_exec_local_result(contract,
+                                                          LoanMethods.GET_REPAYMENT_BY_INDEX,
+                                                          ContractNames.LOAN_CONTROLLER,
+                                                          user_tag, loan_index,
+                                                          expend_index, repay_index)
                     dt_repayment = {
-                        "installment_number": repayment.installment_number,
-                        "real_repay_time": repayment.real_repay_time,
-                        "overdue_days": repayment.overdue_days,
-                        "real_repay_amount": repayment.real_repay_amount,
-                        "repay_amount_type": repayment.repay_amount_type
+                        "installment_number": _change_bytes2string(expendinfos[1]),
+                        "real_repay_time": repaymentinfos[5],
+                        "overdue_days": repaymentinfos[2],
+                        "real_repay_amount": repaymentinfos[4],
+                        "repay_amount_type": repaymentinfos[3]
                     }
                     list_repayment.append(dt_repayment)
-
                 dt_loan["repayment_data"] = list_repayment
                 list_loaninfo.append(dt_loan)
-
             dt_platform["loan_data"] = list_loaninfo
             list_platform.append(dt_platform)
         user_data["platform_data"] = list_platform
@@ -256,11 +303,3 @@ def get_user_data(request):
             'code': -1,
             'msg': str(err)
         })
-
-
-
-
-
-
-
-

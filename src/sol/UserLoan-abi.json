@@ -14,20 +14,6 @@
     "type": "function"
   },
   {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "_user_data_store_address",
-        "type": "address"
-      }
-    ],
-    "name": "setStore",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "constant": true,
     "inputs": [
       {
@@ -155,39 +141,11 @@
   {
     "constant": true,
     "inputs": [],
-    "name": "getUserTage",
-    "outputs": [
-      {
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "self",
+    "name": "getUserLoanStoreAddress",
     "outputs": [
       {
         "name": "",
         "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "userTag",
-    "outputs": [
-      {
-        "name": "",
-        "type": "bytes32"
       }
     ],
     "payable": false,
@@ -329,6 +287,34 @@
     "constant": false,
     "inputs": [
       {
+        "name": "_data_store_route_address",
+        "type": "address"
+      }
+    ],
+    "name": "setUserLoanStoreRoute",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getUserLoanStoreVersion",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint32"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
         "name": "_loan_tag",
         "type": "bytes32"
       },
@@ -360,17 +346,17 @@
     "type": "function"
   },
   {
-    "constant": false,
-    "inputs": [
+    "constant": true,
+    "inputs": [],
+    "name": "getUserTag",
+    "outputs": [
       {
-        "name": "_data_store_route_address",
-        "type": "address"
+        "name": "",
+        "type": "bytes32"
       }
     ],
-    "name": "setRouter",
-    "outputs": [],
     "payable": false,
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -504,6 +490,20 @@
     "type": "function"
   },
   {
+    "constant": true,
+    "inputs": [],
+    "name": "getUserLoanStoreRouteAddress",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "constant": false,
     "inputs": [
       {
@@ -624,7 +624,7 @@
         "type": "address"
       }
     ],
-    "name": "UserContractSetRouter",
+    "name": "UserLoanSetRouter",
     "type": "event"
   },
   {

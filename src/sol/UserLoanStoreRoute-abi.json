@@ -55,26 +55,30 @@
     "type": "function"
   },
   {
-    "constant": true,
+    "constant": false,
     "inputs": [
       {
-        "name": "user_tag",
-        "type": "bytes32"
+        "name": "data_owner",
+        "type": "address"
       },
       {
-        "name": "version",
+        "name": "data_address",
+        "type": "address"
+      },
+      {
+        "name": "set_current",
+        "type": "bool"
+      }
+    ],
+    "name": "setAddress",
+    "outputs": [
+      {
+        "name": "",
         "type": "uint32"
       }
     ],
-    "name": "getAddress",
-    "outputs": [
-      {
-        "name": "dest",
-        "type": "address"
-      }
-    ],
     "payable": false,
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -84,25 +88,6 @@
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "user_tag",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getMaxVersion",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint32"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -120,32 +105,14 @@
     "type": "function"
   },
   {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "user_tag",
-        "type": "bytes32"
-      },
-      {
-        "name": "version",
-        "type": "uint32"
-      }
-    ],
-    "name": "setCurrentVersion",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "constant": true,
     "inputs": [
       {
-        "name": "user_tag",
-        "type": "bytes32"
+        "name": "data_owner",
+        "type": "address"
       }
     ],
-    "name": "getCurrentVersion",
+    "name": "getMaxVersion",
     "outputs": [
       {
         "name": "",
@@ -184,6 +151,43 @@
     "type": "function"
   },
   {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "data_owner",
+        "type": "address"
+      }
+    ],
+    "name": "getCurrentAddress",
+    "outputs": [
+      {
+        "name": "dest",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "data_owner",
+        "type": "address"
+      },
+      {
+        "name": "version",
+        "type": "uint32"
+      }
+    ],
+    "name": "setCurrentVersion",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "constant": false,
     "inputs": [
       {
@@ -202,25 +206,26 @@
     "type": "function"
   },
   {
-    "constant": false,
+    "constant": true,
     "inputs": [
       {
-        "name": "user_tag",
-        "type": "bytes32"
-      },
-      {
-        "name": "user_contract_address",
+        "name": "data_owner",
         "type": "address"
       },
       {
-        "name": "set_current",
-        "type": "bool"
+        "name": "version",
+        "type": "uint32"
       }
     ],
-    "name": "setAddress",
-    "outputs": [],
+    "name": "getAddress",
+    "outputs": [
+      {
+        "name": "dest",
+        "type": "address"
+      }
+    ],
     "payable": false,
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -255,15 +260,15 @@
     "constant": true,
     "inputs": [
       {
-        "name": "user_tag",
-        "type": "bytes32"
+        "name": "data_owner",
+        "type": "address"
       }
     ],
-    "name": "getCurrentAddress",
+    "name": "getCurrentVersion",
     "outputs": [
       {
-        "name": "dest",
-        "type": "address"
+        "name": "",
+        "type": "uint32"
       }
     ],
     "payable": false,
@@ -299,8 +304,8 @@
       },
       {
         "indexed": false,
-        "name": "user_tag",
-        "type": "bytes32"
+        "name": "data_owner",
+        "type": "address"
       },
       {
         "indexed": false,
@@ -309,11 +314,11 @@
       },
       {
         "indexed": false,
-        "name": "user_contract_address",
+        "name": "data_address",
         "type": "address"
       }
     ],
-    "name": "SetUserContractAddress",
+    "name": "SetLoanStoreAddress",
     "type": "event"
   },
   {
@@ -331,8 +336,8 @@
       },
       {
         "indexed": false,
-        "name": "user_tag",
-        "type": "bytes32"
+        "name": "data_owner",
+        "type": "address"
       },
       {
         "indexed": false,
@@ -340,7 +345,7 @@
         "type": "uint32"
       }
     ],
-    "name": "SetUserContractCurrentVersion",
+    "name": "SetLoanStoreCurrentVersion",
     "type": "event"
   },
   {

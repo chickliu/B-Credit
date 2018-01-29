@@ -1,39 +1,35 @@
 pragma solidity ^0.4.18;
 
 import {Pausable} from "./Pausable.sol";
-import {DataStoreRoute} from "./DataStoreRoute.sol";
-import {LoanDataStore} from "./LoanDataStore.sol";
+import {LoanContractRoute} from "./LoanContractRoute.sol";
+import {UserLoan} from "./UserLoan.sol";
 
-contract UserContract is Pausable {
-    bytes32 public userTag;
-    address public self;
-    DataStoreRoute router;
-    LoanDataStore store;
+contract LoanController is Pausable {
+
+    LoanContractRoute router;
     
-    event UserContractSetRouter(
+    //event
+    event LoanControllerSetRouter(
         address origin, 
         address caller, 
-        address data_store_route_address
+        address loan_contract_route_address
     );
     
-    function UserContract(
-        bytes32 _user_tag, 
-        address _data_store_route_address
-    ) 
+    function LoanController(
+        address _loan_contract_route_address
+    )
     public
     {
-        require(_data_store_route_address != address(0));
-        router = DataStoreRoute(_data_store_route_address);
+        require(_loan_contract_route_address != address(0));
+        
+        router = LoanContractRoute(_loan_contract_route_address);
         
         //event
-        UserContractSetRouter(
-            tx.origin, 
-            msg.sender, 
-            _data_store_route_address
+        LoanControllerSetRouter(
+            tx.origin,
+            msg.sender,
+            _loan_contract_route_address
         );
-        
-        userTag = _user_tag;
-        
     }
     
     function name(
@@ -44,78 +40,139 @@ contract UserContract is Pausable {
         bytes32
     )
     {
-        return "UserContract";
+        return "LoanController";
     }
     
-    function setRouter(
-        address _data_store_route_address
+    function setLoanContractRoute(
+        address _loan_contract_route_address
     ) 
-    whenNotPaused canWrite public 
+    whenNotPaused onlyAdmin public 
     {
-        router = DataStoreRoute(_data_store_route_address);
+        router = LoanContractRoute(_loan_contract_route_address);
         
         //event
-        UserContractSetRouter(
-            tx.origin, 
-            msg.sender, 
-            _data_store_route_address
+        LoanControllerSetRouter(
+            tx.origin,
+            msg.sender,
+            _loan_contract_route_address
         );
     }
     
-    function setStore(
-        address _user_data_store_address
-    ) 
-    whenNotPaused canWrite public
-    {
-        store = LoanDataStore(_user_data_store_address);
-        router.setAddress(this, _user_data_store_address, true);
-    }
-    
-    function getUserTage(
+    function getLoanContractRouteAddress(
     
     )
     whenNotPaused canCall public view
-    returns (
-        bytes32    
+    returns(
+        address
     )
     {
-        return userTag;
+        return router;
+    }
+    
+    function getLoanContractVersion(
+        bytes32 _user_tag
+    )
+    whenNotPaused canCall public view
+    returns(
+        uint32
+    )
+    {
+        return router.getCurrentVersion(_user_tag);
+    }
+    
+    function getLoanContractAddress(
+        bytes32 _user_tag
+    )
+    whenNotPaused canCall public view
+    returns (
+        address
+    )
+    {
+        return router.getCurrentAddress(_user_tag);
+    }
+    
+    function _getLoanContract(
+        bytes32 _user_tag
+    )
+    whenNotPaused canCall internal view
+    returns (
+        UserLoan user_contract
+    )
+    {
+        address loan_contract_address = getLoanContractAddress(_user_tag);
+        require(loan_contract_address != address(0));
+        return UserLoan(loan_contract_address);
+    }
+    
+    function getUserLoanStoreRouteAddress(
+        bytes32 _user_tag
+    )
+    whenNotPaused canCall public view
+    returns(
+        address
+    )
+    {
+        return _getLoanContract(_user_tag).getUserLoanStoreRouteAddress();
+    }
+    
+    function getUserLoanStoreVersion(
+        bytes32 _user_tag
+    )
+    whenNotPaused canCall public view
+    returns(
+        uint32
+    )
+    {
+        return _getLoanContract(_user_tag).getUserLoanStoreVersion();
+    }
+    
+    function getUserLoanStoreAddress(
+        bytes32 _user_tag
+    )
+    whenNotPaused canCall public view
+    returns (
+        address
+    )
+    {
+        return _getLoanContract(_user_tag).getUserLoanStoreAddress();
     }
     
     function getLoanTimes(
-    
+        bytes32 _user_tag
     ) 
     whenNotPaused canCall public view 
     returns (
         uint32
     ) 
     {
-        return store.getLoanTimes();
+        return _getLoanContract(_user_tag).getLoanTimes();
     }
     
     function getLatestUpdate(
-    
+        bytes32 _user_tag
     ) 
     whenNotPaused canCall public view 
     returns (
         uint
     ) 
     {
-        return store.getLatestUpdate();
+        return _getLoanContract(_user_tag).getLatestUpdate();
     }
     
     function updateLoan(
+        bytes32 _user_tag,   // 用户唯一标识
         bytes32 _loan_tag,   // 借贷记录唯一标识
         bytes32 _platform,   // 平台
         uint32 _credit_limit // 授信额度
     ) 
     whenNotPaused canWrite public 
     {
-        store.updateLoan(_loan_tag, _platform, _credit_limit);
+        _getLoanContract(_user_tag).updateLoan(_loan_tag, _platform, _credit_limit);
     }
     
     function getLoanByIndex(
-        uint32 _index
+        bytes32 _user_tag,  // 用户唯一标识
+        uint32 _index       // 插入借贷记录时的loanCounter值
     ) 
     whenNotPaused canCall public view 
     returns (
@@ -125,10 +182,11 @@ contract UserContract is Pausable {
         uint32   // 授信额度
     ) 
     {
-        return store.getLoanByIndex(_index);
+        return _getLoanContract(_user_tag).getLoanByIndex(_index);
     }
     
     function updateExpenditure(
+        bytes32 _user_tag,     // 用户唯一标识
         bytes32 _loan_tag,     // 借贷记录唯一标识
         bytes32 _expend_tag,   // 支用记录唯一标识
         bytes32 _order_number, // 订单号
@@ -142,7 +200,7 @@ contract UserContract is Pausable {
     ) 
     whenNotPaused canWrite public 
     {
-        store.updateExpenditure(
+        _getLoanContract(_user_tag).updateExpenditure(
             _loan_tag,
             _expend_tag,
             _order_number, 
@@ -157,8 +215,9 @@ contract UserContract is Pausable {
     }
     
     function getExpendByIndex(
-        uint32 _loan_index, 
-        uint32 _expend_index
+        bytes32 _user_tag,    // 用户唯一标识
+        uint32 _loan_index,   // 插入借贷记录时的loanCounter值
+        uint32 _expend_index  // 插入支用记录时的expenditureCounter值
     ) 
     whenNotPaused canCall public view 
     returns (
@@ -175,10 +234,11 @@ contract UserContract is Pausable {
         uint      // 利息
     ) 
     {
-       return store.getExpendByIndex(_loan_index, _expend_index);
+       return _getLoanContract(_user_tag).getExpendByIndex(_loan_index, _expend_index);
     }
     
     function updateInstallment(
+        bytes32 _user_tag,          // 用户唯一标识
         bytes32 _loan_tag,          // 借贷记录唯一标识
         bytes32 _expend_tag,        // 支用记录唯一标识
         bytes32 _installment_tag,   // 还款计划记录唯一标识
@@ -188,7 +248,7 @@ contract UserContract is Pausable {
     ) 
     whenNotPaused canWrite public 
     {
-        store.updateInstallment(
+        _getLoanContract(_user_tag).updateInstallment(
             _loan_tag,
             _expend_tag,
             _installment_tag, 
@@ -199,6 +259,7 @@ contract UserContract is Pausable {
     }
     
     function getInstallmentByIndex(
+        bytes32 _user_tag,          // 用户唯一标识
         uint32 _loan_index,       // 插入借贷记录时的loanCounter值
         uint32 _expend_index,     // 插入支用记录时的expenditureCounter值
         uint32 _installment_index // 插入还款计划记录时的installmentCounter值
@@ -211,10 +272,15 @@ contract UserContract is Pausable {
         uint     // 还款金额
     ) 
     {
-        return store.getInstallmentByIndex(_loan_index, _expend_index, _installment_index);
+        return _getLoanContract(_user_tag).getInstallmentByIndex(
+            _loan_index, 
+            _expend_index,
+            _installment_index
+        );
     }
     
     function updateRepayment(
+        bytes32 _user_tag,          // 用户唯一标识
         bytes32 _loan_tag,          // 借贷记录唯一标识
         bytes32 _expend_tag,        // 支用记录唯一标识
         bytes32 _repayment_tag,     // 还款记录唯一标识
@@ -226,7 +292,7 @@ contract UserContract is Pausable {
     ) 
     whenNotPaused canWrite public 
     {
-        store.updateRepayment(
+        _getLoanContract(_user_tag).updateRepayment(
             _loan_tag,
             _expend_tag,
             _repayment_tag,
@@ -239,6 +305,7 @@ contract UserContract is Pausable {
     }
     
     function getRepaymentByIndex(
+        bytes32 _user_tag,          // 用户唯一标识
         uint32 _loan_index,     // 插入借贷记录时loanCounter的值
         uint32 _expend_index,   // 插入支用记录时expenditureCounter的值
         uint32 _repayment_index // 插入还款记录时repaymentCounter的值
@@ -253,7 +320,11 @@ contract UserContract is Pausable {
         uint     // 还款时间
     ) 
     {
-        return store.getRepaymentByIndex(_loan_index, _expend_index, _repayment_index);
+        return _getLoanContract(_user_tag).getRepaymentByIndex(
+            _loan_index, 
+            _expend_index, 
+            _repayment_index
+        );
     }
 }
 

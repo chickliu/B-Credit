@@ -560,7 +560,7 @@
       },
       {
         "indexed": false,
-        "name": "tx_hash",
+        "name": "block_number",
         "type": "uint256"
       },
       {

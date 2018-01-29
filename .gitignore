@@ -2,7 +2,6 @@
 *.swp
 *.swo
 settings.py
-
 *gen-py/
 tk_manager.log*
 *tags

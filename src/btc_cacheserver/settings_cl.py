@@ -38,11 +38,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'btc_cacheserver.contract',
+    'channels',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -117,7 +120,9 @@ USE_L10N = True
 
 USE_TZ = True
 
-
+CORS_ORIGIN_ALLOW_ALL = False
+CORS_ALLOW_CREDENTIALS = True
+CORS_ORIGIN_WHITELIST = ("localhost:4200")
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
@@ -181,4 +186,22 @@ LOGGING = {
 }
 }
 }
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "asgiref.inmemory.ChannelLayer",
+        "ROUTING": "btc_cacheserver.blockchain.routing.channel_routing",
+    },
+}
+
+CONTRACT_DIR = os.path.join(BASE_DIR, "sol")
+INTERFACE_ABI_FILE = BASE_DIR + "/sol/Interface-abi.json"
+INTERFACE_SOL_FILE = BASE_DIR + "/sol/Interface.sol"
+USER_CONTRACT_ABI_FILE = "./test-user-contract-abi.json"
+
+BLOCKCHAIN_ACCOUNT        = "0x3b2BD2ad09FC693119736b6E038Cd2343B9F8D2a"
+BLOCKCHAIN_PASSWORD       = "123456"
+BLOCKCHAIN_CALL_GAS_LIMIT = 4500000
+TRANSACTION_MAX_WAIT      = 600
+
 
