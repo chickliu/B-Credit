@@ -60,8 +60,8 @@ def _get_installmentinfo_with_loan(user_contract, user_tag, l_index, ex_index, c
 
     if count > 0:
         list_info = []
-        for index in range(count):
-            installment_infos = common.pure_get_exec(user_contract,
+        for index in range(1, count + 1):
+            installment_infos = common.transaction_exec_local_result(user_contract,
                                                      LoanMethods.GET_INSTALLMENT_BY_INDEX,
                                                      ContractNames.LOAN_CONTROLLER,
                                                      user_tag, l_index, ex_index,

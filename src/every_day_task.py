@@ -3,15 +3,14 @@
 
 import logging
 import time
+import base
 from web3 import Web3, RPCProvider
 
-from btc_cacheserver import settings
 from btc_cacheserver.blockchain.models import BlockNumberRecording
 
 
 Log = logging.getLogger("scripts")
-provider = RPCProvider(host=settings.BLOCKCHAIN_RPC_HOST, port=settings.BLOCKCHAIN_RPC_PORT)
-w3 = Web3(provider)
+w3 = base.create_web3_instance()
 
 
 def add_blocknumber():
