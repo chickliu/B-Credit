@@ -13,6 +13,8 @@ from web3 import Web3, RPCProvider
 from btc_cacheserver import settings
 from btc_cacheserver.blockchain.models import BlockNumberRecording
 from btc_cacheserver.contract.models import PlatFormInfo, LoanInformation, RepaymentInfo
+from btc_cacheserver.util import common
+from btc_cacheserver.defines import ContractNames, LoanMethods
 
 Log = logging.getLogger("scripts")
 provider = RPCProvider(host=settings.BLOCKCHAIN_RPC_HOST, port=settings.BLOCKCHAIN_RPC_PORT)
@@ -166,6 +168,40 @@ def get_total_number(request):
         }
 
         return JsonResponse(data)
+    except Exception as err:
+        Log.error(str(err), exc_info=True)
+        return JsonResponse({
+            'code': -1,
+            'msg': str(err)
+        })
+
+
+@require_http_methods(['GET'])
+@csrf_exempt
+def get_account_info(request, address):
+    if not address:
+        Log.warn("User address is error.")
+        return JsonResponse({"msg": "User address is error.", "code": -1})
+
+    try:
+        _address = "0x" + address
+        tx_count = w3.eth.getTransactionCount(_address)
+        contract = common.get_contract_instance(settings.TOKEN_ADDRESS,
+                                                common.get_abi_path(ContractNames.TOKEN))
+
+        balanceof = common.transaction_exec_local_result(contract, "balanceOf", _address)
+
+        data = {
+            "msg": "",
+            "code": 0,
+            "account": {
+                "address": _address,
+                "tx_count": tx_count,
+                "balance": balanceof
+            }
+        }
+        return JsonResponse(data)
+
     except Exception as err:
         Log.error(str(err), exc_info=True)
         return JsonResponse({
