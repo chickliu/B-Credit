@@ -35,3 +35,11 @@ def decode_input(str_input):
         dict_abi = json.load(abi_file)
     method_name, args = decode_contract_call(dict_abi, str_input)
     return method_name, args
+
+def is_create_user_tx(str_input):
+    if str_input[0:2]=="0x":
+        str_input = str_input[2:]
+    with open(settings.USERLOAN_FILE, 'r') as json_file:
+        dict_file = json.load(json_file)
+    return str_input[:256] == dict_file['bin'][:256]
+
