@@ -198,6 +198,7 @@ CONTRACT_DIR = os.path.join(BASE_DIR, "sol")
 INTERFACE_ABI_FILE = BASE_DIR + "/sol/Interface-abi.json"
 INTERFACE_SOL_FILE = BASE_DIR + "/sol/Interface.sol"
 USER_CONTRACT_ABI_FILE = "./test-user-contract-abi.json"
+USERLOAN_FILE = BASE_DIR + '/sol/UserLoan.json'
 
 BLOCKCHAIN_ACCOUNT        = "0x3b2BD2ad09FC693119736b6E038Cd2343B9F8D2a"
 BLOCKCHAIN_PASSWORD       = "123456"
