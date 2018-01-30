@@ -13,8 +13,8 @@ class User(models.Model):
     loan_counter  = models.IntegerField(default=0, blank=True, help_text="借贷次数")
     latest_update = models.BigIntegerField(default=0, blank=True, help_text="最后更新时间戳")
 
-    phone_no      = models.CharField(max_length=20, blank=True, null=True, help_text="用户电话")
-    id_no         = models.CharField(max_length=20, blank=True, null=True, help_text="身份证号")
+    phone_no      = models.CharField(max_length=32, blank=True, null=True, help_text="用户电话")
+    id_no         = models.CharField(max_length=32, blank=True, null=True, help_text="身份证号")
     username      = models.CharField(max_length=64, blank=True, null=True, help_text="用户姓名")
     tag           = models.CharField(max_length=64, unique=True, help_text="区块链中的唯一标识")
 
@@ -32,7 +32,7 @@ class LoanInfo(models.Model):
     credit_ceiling = models.IntegerField(default=0, help_text="授信额度")
     expend_counter = models.IntegerField(default=0, blank=True, help_text="支用次数")
 
-    platform       = models.CharField(max_length=64, help_text="所属平台")
+    platform       = models.CharField(max_length=32, help_text="所属平台")
     creator        = models.CharField(max_length=64, blank=True, null=True, help_text='创建记录的account')
     tag            = models.CharField(max_length=64, unique=True, help_text="区块链中的唯一标识")
 
@@ -51,11 +51,11 @@ class ExpendInfo(models.Model):
 
     apply_time          = models.DateTimeField(help_text='申请时间')
 
-    bank_card           = models.CharField(max_length=64, default="", help_text='此次交易所属的银行卡')
+    order_number        = models.CharField(max_length=32, help_text='订单号')
+    reason              = models.CharField(max_length=32, default="", help_text='用途')
+    bank_card           = models.CharField(max_length=32, default="", help_text='此次交易所属的银行卡')
     creator             = models.CharField(max_length=64, blank=True, null=True, help_text='创建记录的account')
     tag                 = models.CharField(max_length=64, unique=True, help_text="区块链中的唯一标识")
-    order_number        = models.CharField(max_length=255, help_text='订单号')
-    reason              = models.CharField(max_length=255, default="", help_text='用途')
 
     class Meta:
         db_table = u'expendinfo'
@@ -109,15 +109,15 @@ class TransactionInfo(models.Model):
     method            = models.CharField(max_length=64, blank=True, default="", help_text='合约函数名')
     call_from         = models.CharField(max_length=64, help_text='合约调用account')
     call_to           = models.CharField(max_length=64, blank=True, null=True, help_text='合约地址')
-    transactionHash   = models.CharField(max_length=70, help_text='交易的hash')
+    transactionHash   = models.CharField(max_length=128, help_text='交易的hash')
 
     class Meta:
         db_table = u'transactioninfo'
 
 class ContractDeployInfo(models.Model):
-    address = models.CharField(max_length=40, help_text="合约地址")
+    address = models.CharField(max_length=64, help_text="合约地址")
     name    = models.CharField(max_length=64, default="",  help_text="合约名称")
-    tx      = models.CharField(max_length=66, unique=True, help_text="交易hash")
+    tx      = models.CharField(max_length=128, unique=True, help_text="交易hash")
 
     class Meta:
         db_table = u'deployinfo'
