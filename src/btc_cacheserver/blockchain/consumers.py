@@ -11,7 +11,7 @@ METHOD_TYPE_MAP = {"getLoanByIndex":1, "updateLoan":2,
                    "getInstallmentByIndex":1, "updateInstallment":2,
                    "getRepaymentByIndex":1, "updateRepayment":2 }
 
-METHOD_SHOW_MAP = {"none":u"", "getLoanByIndex":u"借款", "updateLoan":u"借款",
+METHOD_SHOW_MAP = {"none":u"", "getLoanByIndex":u"授信", "updateLoan":u"授信",
                    "getExpendByIndex":u"支用", "updateExpenditure":u"支用",
                    "getInstallmentByIndex":u"分期", "updateInstallment":u"分期",
                    "getRepaymentByIndex":u"还款", "updateRepayment":u"还款" }
@@ -39,6 +39,7 @@ def ws_connect(message):
                     "tx_count": len(block_info['transactions'])
             }
             data_list.append(data)
+            #Log.warn("block_number:{},miner:{}".format(data['blocknumber'],data['miner']))
         datas = {"blockchain":data_list}
         json_data = json.dumps(datas)
         Group("chain").send({"text": json_data})
@@ -71,11 +72,11 @@ def ws_connect(message):
                         continue
 
                 if tx_type in [1,2]:
-                    tx_message = u'{}向{}{}一笔{}信息'.format(tx_info['from'], tx_info['to'], TYPE_SHOW_MAP[tx_type],  METHOD_SHOW_MAP[method_name])
+                    tx_message = u'{}向{}{}一笔{}信息'.format(tx_info['from'][2:10], tx_info['to'][2:10], TYPE_SHOW_MAP[tx_type],  METHOD_SHOW_MAP[method_name])
                 elif tx_type == 0:
-                    tx_message = u'{}向{}转入{}'.format(tx_info['from'], tx_info['to'], tx_info['value'])
+                    tx_message = u'{}向{}转入{}'.format(tx_info['from'][2:10], tx_info['to'][2:10], tx_info['value'])
                 elif tx_type == -1:
-                    tx_message = u'{}新增一个用户'.format(tx_info['from'])
+                    tx_message = u'{}新增一个用户'.format(tx_info['from'][2:10])
                 data = {
                         "tx_hash": th,
                         "from": tx_info['from'],
@@ -86,7 +87,7 @@ def ws_connect(message):
                         "time": block.timestamp
                 }
                 data_list.append(data)
-                #Log.warn("tx_hash:{},info message:{}".format(th,tx_message))
+                #Log.warn("tx_hash:{},info message:{}".format(data['tx_hash'],data['info']))
                 if len(data_list) > 9:
                     break
             else:
