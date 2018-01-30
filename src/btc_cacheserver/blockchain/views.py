@@ -185,6 +185,13 @@ def get_account_info(request, address):
 
     try:
         _address = "0x" + address
+        accounts = w3.eth.accounts
+
+        if not (_address in accounts):
+            nouser_msg = "Cannot find user,address is {}.".format(_address)
+            Log.warn(nouser_msg)
+            return JsonResponse({"msg": nouser_msg, "code": -1})
+
         tx_count = w3.eth.getTransactionCount(_address)
         contract = common.get_contract_instance(settings.TOKEN_ADDRESS,
                                                 common.get_abi_path(ContractNames.TOKEN))
