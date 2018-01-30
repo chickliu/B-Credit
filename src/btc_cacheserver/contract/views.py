@@ -119,7 +119,7 @@ def update_load_data(request):
                 for loan in loan_datas:
                     order_number = loan.get("order_number", "")
                     loan_id = _check_model_data(ExpendInfo, Q(order_number=order_number,
-                                                                   platform=platform_obj))
+                                                              loaninfo=platform_obj))
 
                     if not loan_id:
                         apply_amount = loan.get("apply_amount", 0)
@@ -130,7 +130,7 @@ def update_load_data(request):
                         bank_card = loan.get("bank_card", "")
                         overdue_days = loan.get("overdue_days", 0)
 
-                        loan_obj = ExpendInfo.objects.create(platform=platform_obj,
+                        loan_obj = ExpendInfo.objects.create(loaninfo=platform_obj,
                                                                order_number=order_number,
                                                                apply_amount=apply_amount,
                                                                exact_amount=exact_amount,
@@ -144,7 +144,7 @@ def update_load_data(request):
                         if repay_plans:
                             plan_data = json.loads(repay_plans)
                             for plan in plan_data:
-                                InstallmentInfo.objects.create(loan_info=loan_obj,
+                                InstallmentInfo.objects.create(expendinfo=loan_obj,
                                                                installment_number=plan.get("installment_number"),
                                                                repay_time=plan.get("repay_time"),
                                                                repay_amount=plan.get("repay_amount"))
@@ -195,7 +195,7 @@ def update_repayment_data(request):
                     repay_amount_type = repayment.get("repay_amount_type", 0)
 
                     RepaymentInfo.objects.create(
-                        loan_info=loan_info,
+                        expendinfo=loan_info,
                         installment_number=installment_number,
                         real_repay_time=real_repay_time,
                         overdue_days=overdue_days,
