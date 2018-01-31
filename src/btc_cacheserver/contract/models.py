@@ -102,14 +102,8 @@ class TransactionInfo(models.Model):
     repayment         = models.ForeignKey(RepaymentInfo, blank=True, null=True, on_delete=models.SET_NULL)
     installment       = models.ForeignKey(InstallmentInfo, blank=True, null=True, on_delete=models.SET_NULL)
 
-    cumulativeGasUsed = models.IntegerField(default=0, help_text="累计gas消耗")
-    gasUsed           = models.IntegerField(default=0, help_text="gas消耗")
-    blockNumber       = models.IntegerField(default=-1, help_text="区块号")
-
     method            = models.CharField(max_length=64, blank=True, default="", help_text='合约函数名')
-    call_from         = models.CharField(max_length=64, help_text='合约调用account')
-    call_to           = models.CharField(max_length=64, blank=True, null=True, help_text='合约地址')
-    transactionHash   = models.CharField(max_length=128, help_text='交易的hash')
+    transactionHash   = models.CharField(max_length=128, unique=True, help_text='交易的hash')
 
     class Meta:
         db_table = u'transactioninfo'

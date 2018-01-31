@@ -158,11 +158,6 @@ def transaction_exec(_ins, method, *args, **kwargs):
     tx_receipt = get_transaction_receipt(tx_hash)  
 
     _transaction = TransactionInfo(
-        cumulativeGasUsed=tx_receipt.cumulativeGasUsed,
-        gasUsed=tx_receipt.gasUsed,
-        blockNumber=tx_receipt.blockNumber,
-        call_from=getattr(tx_receipt,"from"),
-        call_to=tx_receipt.to,
         transactionHash=tx_receipt.transactionHash,
         method=method
     )   
@@ -197,7 +192,6 @@ def deploy(contract_name, contract_arguments):
     contract = w3.eth.contract(abi=contract_interface["abi"], bytecode=contract_interface['bin'],code_runtime=contract_interface['bin-runtime'])
     
     # Get transaction hash from deployed contract
-    procedure.info(contract_arguments)
     tx_hash = contract.deploy(transaction=transact_kwargs, args=contract_arguments)
     
     # Get tx receipt to get contract address
@@ -229,6 +223,10 @@ def role_removed_from_contract_ins(role_dest_address, dest_contract, role=RouteM
 def role_removed(role_dest_address, dest_contract_name, dest_contract_address, role=RouteMethods.ROLE_WRITER):
     _contract = get_contract_instance(dest_contract_address, get_abi_path(dest_contract_name))
     return role_removed_from_contract_ins(role_dest_address, _contract, role)
+
+def has_role(check_address, dest_contract_name, dest_contract_address, role=RouteMethods.ROLE_WRITER):
+    _contract = get_contract_instance(dest_contract_address, get_abi_path(dest_contract_name))
+    return role_removed_from_contract_ins(check_address, _contract, role)
 
 def create_loan_store(user_tag_str, loan_contract_address):
     procedure = Procedure("<%s>" % user_tag_str)
@@ -376,4 +374,29 @@ def get_loan_contract_address(controller_name, user_tag_str):
 def get_loan_store_address(controller_name, user_tag_str):
     interface = get_contract_instance(settings.INTERFACE_ADDRESS, get_abi_path(ContractNames.INTERFACE))
     return transaction_exec_local_result(interface, InterfaceMethods.GET_USER_LOAN_STORE_ADDRESS, controller_name, w3.toBytes(hexstr=user_tag_str))
+
+def get_latest_update(controller_name, user_tag_str):
+    interface = get_contract_instance(settings.INTERFACE_ADDRESS, get_abi_path(ContractNames.INTERFACE))
+    return transaction_exec_local_result(interface, InterfaceMethods.GET_LATEST_UPDATE, controller_name, w3.toBytes(hexstr=user_tag_str))
+
+def get_loan_times(controller_name, user_tag_str):
+    interface = get_contract_instance(settings.INTERFACE_ADDRESS, get_abi_path(ContractNames.INTERFACE))
+    return transaction_exec_local_result(interface, InterfaceMethods.GET_LOAN_TIMES, controller_name, w3.toBytes(hexstr=user_tag_str))
+
+def get_loan(controller_name, user_tag_str, index):
+    interface = get_contract_instance(settings.INTERFACE_ADDRESS, get_abi_path(ContractNames.INTERFACE))
+    return transaction_exec_local_result(interface, InterfaceMethods.GET_LOAN_BY_INDEX, controller_name, w3.toBytes(hexstr=user_tag_str), index)
+
+def get_expend(controller_name, user_tag_str, index, expend_index):
+    interface = get_contract_instance(settings.INTERFACE_ADDRESS, get_abi_path(ContractNames.INTERFACE))
+    return transaction_exec_local_result(interface, InterfaceMethods.GET_EXPEND_BY_INDEX, controller_name, w3.toBytes(hexstr=user_tag_str), index, expend_index)
+
+def get_installment(controller_name, user_tag_str, index, expend_index, installment_index):
+    interface = get_contract_instance(settings.INTERFACE_ADDRESS, get_abi_path(ContractNames.INTERFACE))
+    return transaction_exec_local_result(interface, InterfaceMethods.GET_INSTALLMENT_BY_INDEX, controller_name, w3.toBytes(hexstr=user_tag_str), index, expend_index, installment_index)
+
+def get_repayment(controller_name, user_tag_str, index, expend_index, repayment_index):
+    interface = get_contract_instance(settings.INTERFACE_ADDRESS, get_abi_path(ContractNames.INTERFACE))
+    return transaction_exec_local_result(interface, InterfaceMethods.GET_REPAYMENT_BY_INDEX, controller_name, w3.toBytes(hexstr=user_tag_str), index, expend_index, repayment_index)
+
 
