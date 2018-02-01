@@ -24,9 +24,10 @@ w3 = Web3(provider)
 new_block_filter = w3.eth.filter('latest')
 new_transaction_filter = w3.eth.filter('latest')
 
-def ws_connect(message):
+def ws_connect(message, account_hash=None):
     message.reply_channel.send({"accept": True})
     Group("chain").add(message.reply_channel)
+
     def new_block_callback(block_hash):
         data_list = []
         block_num = w3.eth.getBlock(block_hash).number
@@ -45,6 +46,8 @@ def ws_connect(message):
         Group("chain").send({"text": json_data})
 
     def new_transaction_callback(block_hash):
+        #print(new_transaction_filter)
+        nonlocal account_hash
         data_list = []
         #block_num = w3.eth.getTransaction(tx_hash).blockNumber
         block_num = w3.eth.getBlock(block_hash).number
@@ -55,6 +58,9 @@ def ws_connect(message):
             bt_list.reverse()
             for th in bt_list:
                 tx_info = w3.eth.getTransaction(th)
+                #print('acc_hash:{},tx_from:{}'.format(account_hash,tx_info['from'][2:]))
+                #if account_hash and tx_info['from'][2:] != account_hash:
+                #    continue
                 if tx_info['to']:
                     method_name, args = decode_input(tx_info['input'])
                     if method_name in METHOD_TYPE_MAP:
@@ -72,11 +78,11 @@ def ws_connect(message):
                         continue
 
                 if tx_type in [1,2]:
-                    tx_message = u'{}向{}{}一笔{}信息'.format(tx_info['from'][2:10], tx_info['to'][2:10], TYPE_SHOW_MAP[tx_type],  METHOD_SHOW_MAP[method_name])
+                    tx_message = u'{}向{}{}一笔{}信息'.format(tx_info['from'][:10], tx_info['to'][:10], TYPE_SHOW_MAP[tx_type],  METHOD_SHOW_MAP[method_name])
                 elif tx_type == 0:
-                    tx_message = u'{}向{}转入{}'.format(tx_info['from'][2:10], tx_info['to'][2:10], tx_info['value'])
+                    tx_message = u'{}向{}转入{}'.format(tx_info['from'][:10], tx_info['to'][:10], tx_info['value'])
                 elif tx_type == -1:
-                    tx_message = u'{}新增一个用户'.format(tx_info['from'][2:10])
+                    tx_message = u'{}新增一个用户'.format(tx_info['from'][:10])
                 data = {
                         "tx_hash": th,
                         "from": tx_info['from'],
@@ -97,34 +103,10 @@ def ws_connect(message):
         json_data = json.dumps(datas)
         Group("chain").send({"text": json_data})
 
-    if not new_block_filter.running:
+    if not account_hash and not new_block_filter.running:
         new_block_filter.watch(new_block_callback)
     if not new_transaction_filter.running:
         new_transaction_filter.watch(new_transaction_callback)
 
-def ws_disconnect(message):
+def ws_disconnect(message, account_hash=None):
     Group("chain").discard(message.reply_channel)
-
-def ws_account_connect(message, account_hash):
-    message.reply_channel.send({"accept": True})
-    Group("chain").add(message.reply_channel)
-
-    def new_block_callback(block_hash):
-        return
-
-    if not new_block_filter.running:
-        new_block_filter.watch(test_block_callback)
-
-def ws_account_disconnect(message, account_hash):
-    Group("chain").discard(message.reply_channel)
-
-def test_block_callback(block_hash):
-    block_info = w3.eth.getBlock(block_hash)
-    data = {
-	    "blocknumber": block_info['number'],
-	    "miner": block_info['miner'],
-	    "time": block_info['timestamp'],
-	    "tx_count": len(block_info['transactions'])
-    }
-    json_data = json.dumps(data)
-    Group("chain").send({"text": json_data})

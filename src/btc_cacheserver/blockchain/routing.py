@@ -1,10 +1,11 @@
 from channels.routing import route
-from . import consumers
+from btc_cacheserver.blockchain import consumers
+from django.urls import path
 
 channel_routing = [
-    route("websocket.connect", consumers.ws_connect),
-    route("websocket.disconnect", consumers.ws_disconnect),
-    route("websocket.account_connect", consumers.ws_account_connect, path=r"^/account/(?P<account_hash>[a-fA-F0-9]{40})/$"),
-    route("websocket.account_disconnect", consumers.ws_account_disconnect, path=r"^/account/(?P<account_hash>[a-fA-F0-9]{40})/$"),
+    route("websocket.connect", consumers.ws_connect, path=r"^/$"),
+    route("websocket.disconnect", consumers.ws_disconnect, path=r"^/$"),
+    route("websocket.connect", consumers.ws_connect, path=r"^/chain/account/(?P<account_hash>[a-fA-F0-9]{40})/$"),
+    route("websocket.disconnect", consumers.ws_disconnect, path=r"^/chain/account/(?P<account_hash>[a-fA-F0-9]{40})/$"),
 ]
 
