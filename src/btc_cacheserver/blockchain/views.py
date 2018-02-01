@@ -15,6 +15,8 @@ from btc_cacheserver.blockchain.models import BlockNumberRecording
 from btc_cacheserver.contract.models import LoanInfo, ExpendInfo, RepaymentInfo
 from btc_cacheserver.util import common
 from btc_cacheserver.defines import ContractNames, LoanMethods
+from btc_cacheserver.blockchain.decode_contract import decode_input, is_create_user_tx
+from btc_cacheserver.blockchain.consumers import TYPE_SHOW_MAP, METHOD_TYPE_MAP
 
 Log = logging.getLogger("scripts")
 provider = RPCProvider(host=settings.BLOCKCHAIN_RPC_HOST, port=settings.BLOCKCHAIN_RPC_PORT)
@@ -39,9 +41,26 @@ def get_block_detail_info(request, number):
         trans_info = []
         for tx_hash in transactions:
             transaction = w3.eth.getTransaction(tx_hash)
+
+            if transaction['to']:
+                method_name, args = decode_input(transaction['input'])
+                if method_name in METHOD_TYPE_MAP:
+                    tx_type = METHOD_TYPE_MAP[method_name]
+                elif transaction['input'] == '0x':
+                    tx_type = 0
+                else:
+                    # Log.warn("tx has to and input is not empty.tx_hash:{}".format(th))
+                    continue
+            else:
+                if is_create_user_tx(transaction['input']):
+                    tx_type = -1
+                else:
+                    # Log.warn("tx has no to and not create_user_tx.tx_hash:{}".format(th))
+                    continue
+
             tx_data = {
                 "tx_hash": transaction.hash,
-                "type": "",
+                "type": TYPE_SHOW_MAP[tx_type],
                 "from": transaction["from"],
                 "to": transaction.to,
                 "value": transaction.value
