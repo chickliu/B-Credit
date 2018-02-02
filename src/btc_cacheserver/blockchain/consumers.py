@@ -21,10 +21,11 @@ TYPE_SHOW_MAP = {-1:u"创建用户", 0:u"转账", 1:u"查询", 2:u"写入"}
 Log = logging.getLogger("websocket")
 provider = RPCProvider(host=settings.BLOCKCHAIN_RPC_HOST, port=settings.BLOCKCHAIN_RPC_PORT)
 w3 = Web3(provider)
-new_block_filter = w3.eth.filter('latest')
-new_transaction_filter = w3.eth.filter('latest')
 
 def ws_connect(message, account_hash=None):
+    global new_block_filter, new_transaction_filter
+    new_block_filter = w3.eth.filter('latest')
+    new_transaction_filter = w3.eth.filter('latest')
     message.reply_channel.send({"accept": True})
     Group("chain").add(message.reply_channel)
 
@@ -46,8 +47,6 @@ def ws_connect(message, account_hash=None):
         Group("chain").send({"text": json_data})
 
     def new_transaction_callback(block_hash):
-        #print(new_transaction_filter)
-        nonlocal account_hash
         data_list = []
         #block_num = w3.eth.getTransaction(tx_hash).blockNumber
         block_num = w3.eth.getBlock(block_hash).number
@@ -59,8 +58,8 @@ def ws_connect(message, account_hash=None):
             for th in bt_list:
                 tx_info = w3.eth.getTransaction(th)
                 #print('acc_hash:{},tx_from:{}'.format(account_hash,tx_info['from'][2:]))
-                #if account_hash and tx_info['from'][2:] != account_hash:
-                #    continue
+                if account_hash and tx_info['from'][2:] != account_hash:
+                    continue
                 if tx_info['to']:
                     method_name, args = decode_input(tx_info['input'])
                     if method_name in METHOD_TYPE_MAP:
@@ -109,4 +108,17 @@ def ws_connect(message, account_hash=None):
         new_transaction_filter.watch(new_transaction_callback)
 
 def ws_disconnect(message, account_hash=None):
+    while not new_block_filter.stopped:
+        try:
+            new_block_filter.stop_watching()
+        except RuntimeError:
+            #print('RuntimeError')
+            pass
+    while not new_transaction_filter.stopped:
+        try:
+            new_transaction_filter.stop_watching()
+        except RuntimeError:
+            #print('RuntimeError')
+            pass
+    #print('stopped')
     Group("chain").discard(message.reply_channel)
