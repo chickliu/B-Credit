@@ -3,7 +3,10 @@ from django.shortcuts import render
 import json
 import logging
 import time
+import pytz
 
+from datetime import datetime, timedelta
+from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -145,10 +148,11 @@ def get_blocknumber_recording(request):
             datetime_query = Q(time__range=(t_start, t_end))
             block_recording = BlockNumberRecording.objects.filter(datetime_query)
         else:
-            block_recording = BlockNumberRecording.objects.all()
+            utc_tz = pytz.timezone("UTC")
+            block_recording = BlockNumberRecording.objects.filter(time__gte=utc_tz.localize(datetime.utcnow() - timedelta(days=2)))
 
         number_list = [block.blocknumber for block in block_recording]
-        time_list = [block.time.strftime("%Y-%m-%d %H:%M:%S") for block in block_recording]
+        time_list = [timezone.localtime(block.time).strftime("%Y-%m-%d %H:%M:%S") for block in block_recording]
 
         data = {
             "msg": "",

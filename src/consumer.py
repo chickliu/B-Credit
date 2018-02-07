@@ -14,6 +14,7 @@ import json
 import random
 
 from amqpstorm import Connection
+from django.utils import timezone
 from django.db import connection
 from django.db.utils import OperationalError
 from web3.exceptions import BadFunctionCallOutput
@@ -26,7 +27,15 @@ from btc_cacheserver.util.procedure_logging import Procedure
 from btc_cacheserver.contract.models import User, LoanInfo, ExpendInfo, InstallmentInfo, RepaymentInfo, TransactionInfo
 
 
-w3 = base.create_web3_instance(10000)
+# try:
+#     rpc_which = int(sys.argv[1], 16)
+# except Exception:
+#     rpc_which = 0
+
+rpc_which = 0
+w3 = base.create_web3_instance(10000, rpc_which=rpc_which)
+
+default_tz = timezone.get_default_timezone()
 
 
 class OutGasError(Exception):
@@ -115,7 +124,7 @@ def update_expend(data):
         _record.exact_amount = data["receive_amount"]     
         _record.interest = data["interest"]
         _record.overdue_days = data["overdue_days"]
-        _record.apply_time = datetime.fromtimestamp(int(data["time_stamp"]))
+        _record.apply_time = datetime.fromtimestamp(int(data["time_stamp"]), tz=default_tz)
         _record.bank_card = data["bank_card"]
         _record.order_number = data["order_number"][-32:]
         _record.reason = data["purpose"]
@@ -128,7 +137,7 @@ def update_expend(data):
             exact_amount=data["receive_amount"],
             interest=data["interest"],
             overdue_days=data.get("overdue_days", 0),
-            apply_time=datetime.fromtimestamp(int(data["time_stamp"])),     
+            apply_time=datetime.fromtimestamp(int(data["time_stamp"]), tz=default_tz),     
             bank_card=data["bank_card"],
             tag=expend_tag,
             order_number=data["order_number"][-32:],
@@ -182,7 +191,7 @@ def update_installment(data):
 
         _record.installment_number = data["installment_number"]
         _record.repay_amount = data["repay_amount"]
-        _record.repay_time = datetime.fromtimestamp(int(data["repay_time"]))
+        _record.repay_time = datetime.fromtimestamp(int(data["repay_time"]), tz=default_tz)
 
     except InstallmentInfo.DoesNotExist:
         expend = ExpendInfo.objects.get(tag=expend_tag)
@@ -190,7 +199,7 @@ def update_installment(data):
             expendinfo=expend,          
             installment_number=data["installment_number"],
             repay_amount=data["repay_amount"],
-            repay_time=datetime.fromtimestamp(int(data["repay_time"])),     
+            repay_time=datetime.fromtimestamp(int(data["repay_time"]), tz=default_tz),     
             tag=installment_tag
         )
 
@@ -227,7 +236,7 @@ def update_repayment(data):
         _record.overdue_days = data["overdue_days"]
         _record.repay_amount_type = data["repay_type"]
         _record.real_repay_amount = data["repay_amount"]
-        _record.real_repay_time = datetime.fromtimestamp(int(data["repay_time"]))
+        _record.real_repay_time = datetime.fromtimestamp(int(data["repay_time"]), tz=default_tz)
 
     except RepaymentInfo.DoesNotExist:
         expend = ExpendInfo.objects.get(tag=expend_tag)
@@ -235,7 +244,7 @@ def update_repayment(data):
             expendinfo=expend,
             installment_number=data["installment_number"],
             overdue_days=data["overdue_days"],
-            real_repay_time=datetime.fromtimestamp(int(data["repay_time"])),
+            real_repay_time=datetime.fromtimestamp(int(data["repay_time"]), tz=default_tz),
             repay_amount_type=data["repay_type"],
             real_repay_amount=data["repay_amount"],
             tag=repayment_tag

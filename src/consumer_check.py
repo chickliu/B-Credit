@@ -11,6 +11,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "btc_cacheserver.settings")
 import time
 import json
 import copy
+import requests
 
 from amqpstorm import Connection
 from amqpstorm import Message
@@ -26,13 +27,18 @@ from btc_cacheserver.defines import ContractNames
 from btc_cacheserver.util.procedure_logging import Procedure
 from btc_cacheserver.contract.models import User, LoanInfo, ExpendInfo, InstallmentInfo, RepaymentInfo
 
-
 w3 = base.create_web3_instance(10000)
-utc_offset = timezone.get_default_timezone().utcoffset(datetime.now()).total_seconds()
+default_tz = timezone.get_default_timezone()
+
 
 class OutGasError(Exception):
     pass
 
+
+def get_mq_msg_readied(queue_name):
+    url="http://10.2.0.150:8762/api/queues/%%2f/%s"
+    rsp = requests.get(url % queue_name, auth=("admin", "admin"))
+    return rsp.json().get("messages")
 
 def check_installments(user_tag_str, record, loan_index, expend_index, installment_counter):
     arguments = copy.copy(locals())
@@ -41,10 +47,14 @@ def check_installments(user_tag_str, record, loan_index, expend_index, installme
 
     for index in range(1, installment_counter + 1):
 
-        _tag, installment_number, repay_time, repay_amount = base.get_installment(ContractNames.LOAN_CONTROLLER, user_tag_str, loan_index, expend_index, index)
+        result = base.get_installment(ContractNames.LOAN_CONTROLLER, user_tag_str, loan_index, expend_index, index)
+
+        procedure.info("chain installment data: %s", result)
+
+        _tag, installment_number, repay_time, repay_amount = result 
         
         _tag = w3.toHex(_tag.encode('raw_unicode_escape')).strip("\0")[2:]
-        chain_date = datetime.fromtimestamp(repay_time)
+        chain_date = datetime.fromtimestamp(repay_time, tz=default_tz)
 
         try:
             installment = InstallmentInfo.objects.get(tag=_tag)
@@ -66,7 +76,7 @@ def check_installments(user_tag_str, record, loan_index, expend_index, installme
             procedure.info("create installment %s", _tag)
 
             installment = InstallmentInfo(
-                loan_info=record,
+                expendinfo=record,
                 installment_number=installment_number,
                 repay_time=chain_date,
                 repay_amount=repay_amount,
@@ -83,10 +93,14 @@ def check_repayments(user_tag_str, record, loan_index, expend_index, repayment_c
 
     for index in range(1, repayment_counter + 1):
 
-        _tag, installment_number, overdue_days, repay_types, repay_amount, repay_time = base.get_repayment(ContractNames.LOAN_CONTROLLER, user_tag_str, loan_index, expend_index, index)
+        result = base.get_repayment(ContractNames.LOAN_CONTROLLER, user_tag_str, loan_index, expend_index, index)
+
+        procedure.info("chain repayment data: %s", result)
+
+        _tag, installment_number, overdue_days, repay_types, repay_amount, repay_time = result
 
         _tag = w3.toHex(_tag.encode('raw_unicode_escape')).strip("\0")[2:]
-        chain_date = datetime.fromtimestamp(repay_time)
+        chain_date = datetime.fromtimestamp(repay_time, tz=default_tz)
 
         try:
             repayment = RepaymentInfo.objects.get(tag=_tag)
@@ -134,7 +148,17 @@ def check_expends(user_tag_str, record, loan_index, expend_times):
 
     for index in range(1, expend_times + 1):
 
-        _tag, order_number, bank_card, purpose, installment_counter, repayment_counter, overdue_days, apply_amount, receive_amount, timestamp, interest = base.get_expend(ContractNames.LOAN_CONTROLLER, user_tag_str, loan_index, index)
+        result = base.get_expend(ContractNames.LOAN_CONTROLLER, user_tag_str, loan_index, index)
+
+        procedure.info("chain expend data: %s", result)
+
+        _tag, order_number, bank_card, purpose, installment_counter, repayment_counter, overdue_days, apply_amount, receive_amount, timestamp, interest = result
+
+        if not installment_counter:
+            raise BadFunctionCallOutput("no installment, rewrite!")
+
+        if not repayment_counter:
+            raise BadFunctionCallOutput("no repayment, rewrite!")
 
         chain_purpose = w3.toText(purpose.encode("raw_unicode_escape")).strip("\0")
         chain_order_number = w3.toText(order_number.encode("raw_unicode_escape")).strip("\0")
@@ -142,7 +166,10 @@ def check_expends(user_tag_str, record, loan_index, expend_times):
 
         _tag = w3.toHex(_tag.encode('raw_unicode_escape')).strip("\0")[2:]
 
-        chain_date = datetime.fromtimestamp(timestamp)
+        chain_date = datetime.fromtimestamp(timestamp, tz=default_tz)
+
+        if not chain_order_number:
+            raise BadFunctionCallOutput("mock expend, rewrite!")
 
         try:
             expend = ExpendInfo.objects.get(tag=_tag)
@@ -217,12 +244,22 @@ def check_loans(user_tag_str, record, loan_times):
 
     for index in range(1, loan_times + 1):
 
-        _tag, platform, expend_times, credit = base.get_loan(ContractNames.LOAN_CONTROLLER, user_tag_str, index)
+        result = base.get_loan(ContractNames.LOAN_CONTROLLER, user_tag_str, index)
+
+        procedure.info("chain loan data: %s", result)
+
+        _tag, platform, expend_times, credit = result 
+
+        if not expend_times:
+            raise BadFunctionCallOutput("no expend, rewrite!")
 
         chain_platform = w3.toText(platform.encode("raw_unicode_escape")).strip("\0")
 
        # cut "0x" at the beginning of the _tag 
         _tag = w3.toHex(_tag.encode('raw_unicode_escape')).strip("\0")[2:]
+
+        if not chain_platform:
+            raise BadFunctionCallOutput("mock loan, rewrite!")
 
         try:
             loan  = LoanInfo.objects.get(tag=_tag)
@@ -266,6 +303,8 @@ def check_latest_update(user_tag_str):
         record = User(tag=user_tag_str)
         record.save()
     loan_times = base.get_loan_times(ContractNames.LOAN_CONTROLLER, user_tag_str)
+    if not loan_times:
+        raise BadFunctionCallOutput("no loan, rewrite!")
     check_loans(user_tag_str, record, loan_times)
 
     record.latest_update = latest_update
@@ -280,6 +319,12 @@ def on_message(message):
     """
 
     procedure = Procedure("<CHECK_MSG>")
+
+    rewrite_message_count = get_mq_msg_readied("write_blockchain_queue_re")
+    while rewrite_message_count > 0:
+        time.sleep(40 * rewrite_message_count)
+        rewrite_message_count = get_mq_msg_readied("write_blockchain_queue_re")
+
     msg_body = message.body
 
     _json = json.loads(msg_body)
@@ -301,7 +346,8 @@ def on_message(message):
         message.reject(requeue=True)
 
     except BadFunctionCallOutput:
-        _data = {"data": {"no_id": data["no_id"], }, }
+        procedure.exception("MOCK_CHECK_MSG, REJECT_REWRITE, message is %s", msg_body)
+        _data = {"data": {"no_id": data["id_no"], }, }
         # Message Properties.
         properties = {
             'content_type': 'application/json',
@@ -310,7 +356,14 @@ def on_message(message):
 
         # Publish the message to a queue called, 'simple_queue'.
         msg.publish(settings.CHECK_BLOCKCHAIN_QUERY, settings.CHECK_BLOCKCHAIN_EXCHANGE)
-        time.sleep(120)
+
+        time.sleep(40)
+
+        # rewrite_message_count = get_mq_msg_readied("write_blockchain_queue_re")
+        # while rewrite_message_count > 0:
+        #     time.sleep(40 * rewrite_message_count)
+        #     rewrite_message_count = get_mq_msg_readied("write_blockchain_queue_re")
+
         message.reject(requeue=True)
 
     except Exception:

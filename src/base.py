@@ -107,7 +107,14 @@ def get_abi(contract_name):
 
     return abi
 
-def create_web3_instance(time_out=1000):
+def create_web3_instance(time_out=1000, rpc_which=0):
+    # if int(rpc_which) % 2:
+    #     host = settings.BLOCKCHAIN_RPC_HOST_1
+    #     port = settings.BLOCKCHAIN_RPC_PORT_1
+    # else:
+    #     host = settings.BLOCKCHAIN_RPC_HOST_0
+    #     port = settings.BLOCKCHAIN_RPC_PORT_0
+    # provider = RPCProvider(host=host, port=port)
     provider = RPCProvider(host=settings.BLOCKCHAIN_RPC_HOST, port=settings.BLOCKCHAIN_RPC_PORT)
     _ins = Web3(provider)
     _ins.eth.defaultAccount = settings.BLOCKCHAIN_ACCOUNT

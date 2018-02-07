@@ -2,12 +2,12 @@
 #-*- coding: utf-8 -*-
 
 import logging
-import time
+import pytz
 import base
-from web3 import Web3, RPCProvider
+
+from datetime import datetime
 
 from btc_cacheserver.blockchain.models import BlockNumberRecording
-
 
 Log = logging.getLogger("scripts")
 w3 = base.create_web3_instance()
@@ -16,9 +16,18 @@ w3 = base.create_web3_instance()
 def add_blocknumber():
     try:
         blocknumber = w3.eth.blockNumber
-        now = time.strftime("%Y-%m-%d", time.localtime())
 
-        BlockNumberRecording.objects.create(blocknumber=blocknumber, time=now)
+        utc_tz = pytz.timezone("UTC")
+        now = utc_tz.localize(datetime.strptime(datetime.utcnow().strftime("%Y%m%d%H"), "%Y%m%d%H"))
+
+        exists = BlockNumberRecording.objects.filter(time=now)
+        if not exists:
+            BlockNumberRecording.objects.create(blocknumber=blocknumber, time=now)
+        else:
+            _record = exists[0]
+            _record.blocknumber = blocknumber
+            _record.save()
+        Log.info("daily record block_number(%s) at %s", blocknumber, now)
     except Exception as err:
         Log.error(str(err), exc_info=True)
 
