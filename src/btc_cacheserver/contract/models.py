@@ -109,7 +109,7 @@ class TransactionInfo(models.Model):
         db_table = u'transactioninfo'
 
 class ContractDeployInfo(models.Model):
-    address = models.CharField(max_length=64, help_text="合约地址")
+    address = models.CharField(max_length=64, unique=True, help_text="合约地址")
     name    = models.CharField(max_length=64, default="",  help_text="合约名称")
     tx      = models.CharField(max_length=128, unique=True, help_text="交易hash")
 

@@ -322,7 +322,7 @@ def on_message(message):
 
     rewrite_message_count = get_mq_msg_readied("write_blockchain_queue_re")
     while rewrite_message_count > 0:
-        time.sleep(40 * rewrite_message_count)
+        time.sleep(15 * rewrite_message_count)
         rewrite_message_count = get_mq_msg_readied("write_blockchain_queue_re")
 
     msg_body = message.body
@@ -357,7 +357,7 @@ def on_message(message):
         # Publish the message to a queue called, 'simple_queue'.
         msg.publish(settings.CHECK_BLOCKCHAIN_QUERY, settings.CHECK_BLOCKCHAIN_EXCHANGE)
 
-        time.sleep(40)
+        time.sleep(15)
 
         # rewrite_message_count = get_mq_msg_readied("write_blockchain_queue_re")
         # while rewrite_message_count > 0:

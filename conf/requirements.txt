@@ -4,3 +4,4 @@ django-cors-headers==2.1.0
 ethereum==2.3.0
 web3==3.16.4
 pip==8.1.1
+asgi-redis==1.4.3

@@ -262,7 +262,7 @@ def on_message(message):
     :param message:
     :return:
     """
-    # time.sleep(random.randint(1, 10))
+    time.sleep(random.randint(1, 3))
     procedure = Procedure("<MSG-%s>" % sys.argv[1])
     msg_body = message.body
 

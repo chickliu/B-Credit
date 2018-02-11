@@ -124,7 +124,7 @@ def create_web3_instance(time_out=1000, rpc_which=0):
 
 w3 = create_web3_instance()
 
-transact_kwargs = {"from": settings.BLOCKCHAIN_ACCOUNT, "gas": settings.BLOCKCHAIN_CALL_GAS_LIMIT, }
+transact_kwargs = {"from": settings.BLOCKCHAIN_ACCOUNT, "gas": settings.BLOCKCHAIN_CALL_GAS_LIMIT, "gasPrice": 4200000000, }
 
 
 def get_contract_instance(contract_address, abi_file_path=None, account_time_out=10000):
